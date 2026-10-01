@@ -1,0 +1,42 @@
+[project]
+name = "rehub"
+version = "0.1.0"
+description = "Safe, stateful CLI over standard OT traffic analysis tools"
+authors = [
+    { name = "Anirudh", email = "anirudh.ashrith2005@gmail.com" }
+]
+license = "Apache-2.0"
+requires-python = ">=3.13"
+dependencies = [
+    "typer==0.27.2",
+]
+
+[project.scripts]
+rehub = "rehub.cli:app"
+
+[build-system]
+requires = ["uv_build==0.12.21"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "mypy==2.3.1",
+    "pytest==9.1.1",
+    "ruff==0.16.10",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+strict = true
+mypy_path = "fixtures"
+files = ["src", "tests", "fixtures"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["fixtures"]
+markers = ["docker: needs a built rehub image and a running Docker daemon"]
