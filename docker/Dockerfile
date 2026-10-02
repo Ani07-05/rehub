@@ -54,7 +54,7 @@ COPY --from=suricata /opt/suricata /opt/suricata
 COPY --from=yarax /usr/local/bin/yr /usr/local/bin/yr
 COPY --from=ghcr.io/astral-sh/uv:0.12.21 /uv /usr/local/bin/uv
 RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tshark=4.4.18-0+deb13u1 \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tshark=4.4.19-0+deb13u1 tcpdump=4.99.5-2 \
        libpcre2-8-0 libyaml-0-2 libjansson4 libmagic1t64 libpcap0.8t64 libcap-ng0 zlib1g liblz4-1 \
     && rm -rf /var/lib/apt/lists/*
 COPY docker/zeek/rehub.zeek /opt/rehub/zeek/rehub.zeek
