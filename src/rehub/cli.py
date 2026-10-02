@@ -1,10 +1,11 @@
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
 
 import typer
 
 from rehub import baseline as baselines
-from rehub import db
+from rehub import db, yara_ai
 from rehub.analyze import analyze as run_analysis
 from rehub.diff import summarize
 from rehub.doctor import FIXTURES_DIR, run_doctor
@@ -154,3 +155,111 @@ def baseline_diff(
     if result.clean:
         typer.echo("matches baseline")
     raise typer.Exit(0 if result.clean else 1)
+
+
+yara_app = typer.Typer(no_args_is_help=True, help="Scan, explain and draft YARA rules (YARA-X).")
+app.add_typer(yara_app, name="yara")
+
+PROVIDER_HELP = "LLM backend: ollama (local, default) or anthropic (hosted, needs --yes)."
+
+
+def _provider(name: str, model: str | None) -> yara_ai.Provider:
+    try:
+        return yara_ai.make_provider(name, model)
+    except yara_ai.ProviderError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(2) from exc
+
+
+def _confirm_hosted(provider: yara_ai.Provider, system: str, user: str, yes: bool) -> None:
+    if not provider.hosted:
+        return
+    typer.echo(f"This text will be sent to {provider.name} (first request):", err=True)
+    typer.echo(f"--- system ---\n{system}\n--- user ---\n{user}\n---", err=True)
+    if not yes:
+        typer.echo("nothing sent. Re-run with --yes to send it.", err=True)
+        raise typer.Exit(2)
+
+
+def _announce(provider: yara_ai.Provider) -> Callable[[str, str], None]:
+    def send(system: str, user: str) -> None:
+        if provider.hosted:
+            typer.echo(f"sending to {provider.name}:\n{user}\n", err=True)
+
+    return send
+
+
+@yara_app.command("scan")
+def yara_scan(
+    rules: Path = typer.Argument(..., exists=True, readable=True),
+    target: Path = typer.Argument(..., exists=True, readable=True),
+    image: str | None = typer.Option(None, help="Docker image to run yr in."),
+) -> None:
+    """Run yr scan with the given rules over a file or directory."""
+    try:
+        with tempfile.TemporaryDirectory(prefix="rehub-yara-") as tmp:
+            found = yara.scan(default_runner(image), rules, target, Path(tmp))
+    except RunnerError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(2) from exc
+    for match in found:
+        typer.echo(f"{match['rule']}  {match['file']}")
+    if not found:
+        typer.echo("no matches")
+
+
+@yara_app.command("explain")
+def yara_explain(
+    rule: Path = typer.Argument(..., exists=True, dir_okay=False, readable=True),
+    provider_name: str = typer.Option("ollama", "--provider", help=PROVIDER_HELP),
+    model: str | None = typer.Option(None, help="Model name (or set REHUB_MODEL)."),
+    yes: bool = typer.Option(False, "--yes", help="Confirm sending text to a hosted provider."),
+) -> None:
+    """Explain a rule in plain English. Only the rule text is sent to the model."""
+    provider = _provider(provider_name, model)
+    text = rule.read_text()
+    _confirm_hosted(provider, yara_ai.EXPLAIN_SYSTEM, text, yes)
+    try:
+        typer.echo(yara_ai.explain(provider, text, _announce(provider)))
+    except yara_ai.ProviderError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(2) from exc
+
+
+@yara_app.command("draft")
+def yara_draft(
+    description: str = typer.Argument(..., help="What the rule should detect."),
+    positive: list[Path] = typer.Option([], "--positive", exists=True, dir_okay=False),
+    benign: Path | None = typer.Option(None, "--benign", exists=True, file_okay=False),
+    provider_name: str = typer.Option("ollama", "--provider", help=PROVIDER_HELP),
+    model: str | None = typer.Option(None, help="Model name (or set REHUB_MODEL)."),
+    yes: bool = typer.Option(False, "--yes", help="Confirm sending text to a hosted provider."),
+    out: Path | None = typer.Option(None, "--out", help="Also write the rule to this file."),
+    image: str | None = typer.Option(None, help="Docker image to run yr in."),
+) -> None:
+    """Draft a rule with a model, then compile and test it. Sample contents are never sent."""
+    provider = _provider(provider_name, model)
+    _confirm_hosted(provider, yara_ai.DRAFT_SYSTEM, yara_ai.draft_prompt(description), yes)
+    engine = yara_ai.RunnerEngine(default_runner(image))
+    try:
+        result = yara_ai.draft(provider, engine, description, positive, benign, _announce(provider))
+    except (yara_ai.ProviderError, RunnerError) as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(2) from exc
+
+    typer.echo(result.rule)
+    typer.echo(f"\ncompile attempts: {result.attempts}")
+    if result.compile_error:
+        typer.echo(f"compile error:\n{result.compile_error}")
+    for name, matched in result.positives.items():
+        typer.echo(f"positive {name}: {'match' if matched else 'MISS'}")
+    for name in result.benign_hits:
+        typer.echo(f"benign {name}: MATCH")
+    label = result.status.upper()
+    typer.echo(f"status: {label}" + (f" ({result.reason})" if result.reason else ""))
+    if result.status != "validated":
+        typer.echo("model-written rule, not tested to a trusted standard. Review before use.")
+    db.record_yara_rule(db.connect(), yara_ai.rule_name(result.rule), result.rule, result.status)
+    if out:
+        out.write_text(result.rule + "\n")
+    raise typer.Exit(0 if result.status == "validated" else 1)
