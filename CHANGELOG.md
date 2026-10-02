@@ -12,6 +12,7 @@
   opt-in hosted model.
 - `web`: local interface (loopback only) to analyze captures, review baseline changes, run doctor
   and scan with rules.
+- `web` opens on a guided Start page that walks the whole workflow in order.
 - `web` can draft YARA rules (hosted models need a confirmation click) and analyze bundled samples.
 - `report`: the same view as one offline, read only HTML file.
 - `init`, `tools`, `capture` (passive tcpdump).

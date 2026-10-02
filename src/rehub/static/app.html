@@ -268,6 +268,30 @@ details.card[open] summary { margin-bottom: 12px; }
 .toolrow .bad { color: var(--major); font-family: var(--head); font-weight: 700; }
 .stack { display: grid; gap: 4px; font: 500 14px/1.2 var(--head); color: var(--ink-2); }
 .matches { margin: 10px 0 0; padding: 0; list-style: none; font: 14px/1.6 var(--mono); }
+
+/* workflow */
+.flow { list-style: none; margin: 0; padding: 0 0 0 30px; position: relative; max-width: 880px; }
+.flow::before { content: ""; position: absolute; left: 7px; top: 14px; bottom: 14px; width: 3px; background: var(--rail); }
+.step { position: relative; margin: 0 0 12px; padding: 14px 18px 16px; background: var(--surface); border: 1px solid var(--line); }
+.step::before {
+  content: ""; position: absolute; left: -30px; top: 17px; width: 11px; height: 11px;
+  border: 3px solid var(--rail); background: var(--panel); border-radius: 50%;
+}
+.step.done::before { background: var(--ink); border-color: var(--ink); }
+.step.next { border-color: var(--advisory); border-left: 4px solid var(--advisory); }
+.step.next::before { border-color: var(--advisory); background: var(--advisory); box-shadow: 0 0 0 4px color-mix(in srgb, var(--advisory) 25%, transparent); }
+.step.locked { opacity: 0.7; }
+.step-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.step h2 { font: 700 20px/1.2 var(--head); margin: 0; }
+.step-status { margin-left: auto; font: 600 14px/1.2 var(--head); color: var(--ink-2); }
+.step.next .step-status { color: var(--advisory); }
+.step.done .step-status::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 7px; background: var(--ink); }
+.step .why { margin: 6px 0 0; color: var(--ink-2); max-width: 66ch; }
+.step .summary { margin: 6px 0 0; font-weight: 600; }
+.step .cli { margin: 0; color: var(--ink-2); }
+.step-body { margin-top: 12px; }
+.nextline { margin: 0 0 14px; padding: 8px 14px; background: var(--surface); border-left: 4px solid var(--advisory); }
+.link { background: none; border: 0; padding: 0 0 0 6px; color: var(--advisory); font: 600 15px/1 var(--head); cursor: pointer; text-decoration: underline; }
 </style>
 <div class="app">
   <aside class="rail">
@@ -288,13 +312,14 @@ let DATA = EMBEDDED;
 const LIVE = EMBEDDED === null;
 
 const VIEWS = [
+  { id: "start", label: "Start" },
   { id: "changes", label: "Changes" },
   { id: "traffic", label: "Traffic" },
   { id: "doctor", label: "Doctor" },
   { id: "rules", label: "Rules" },
 ];
 const state = {
-  view: "changes", baseline: null, run: null, trafficRun: null,
+  view: "start", baseline: null, run: null, trafficRun: null,
   busy: null, error: null, notice: null,
   analysis: null, toolCheck: null, yara: null,
   baselineName: "", doctorImage: "", rules: "", ruleSample: null,
@@ -362,7 +387,7 @@ async function finishAnalysis(result, label) {
   state.analysis = result;
   await refresh();
   if (result.zeek_run_id != null) { state.run = result.zeek_run_id; state.trafficRun = result.zeek_run_id; }
-  state.view = "traffic";
+  if (state.view !== "start") state.view = "traffic";
   state.notice = `Analyzed ${label}.`;
 }
 
@@ -392,7 +417,7 @@ function saveBaseline(run) {
     await api("/api/baselines", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, run }) });
     await refresh();
     state.baseline = name; state.baselineName = ""; state.run = run;
-    state.view = "changes";
+    if (state.view !== "start") state.view = "changes";
     state.notice = `Saved baseline ${name}. It can no longer be changed.`;
   });
 }
@@ -402,7 +427,7 @@ function runDoctor() {
   return act(`Running doctor${image ? " on " + image : ""}. This takes about half a minute.`, async () => {
     const result = await api("/api/doctor", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image }) });
     await refresh();
-    state.view = "doctor";
+    if (state.view !== "start") state.view = "doctor";
     state.notice = result.passed ? "Every tool matches its golden output." : "Doctor found differences. Details below.";
   });
 }
@@ -532,6 +557,120 @@ function baselineForm(run) {
 function diffFor() {
   if (!state.baseline || state.run == null) return null;
   return DATA.diffs[`${state.baseline}|${state.run}`] || null;
+}
+
+/* ---- the workflow ---- */
+function toolsChecked() {
+  if (state.toolCheck) return state.toolCheck.tools.every((t) => t.ok);
+  return DATA.tools.length > 0;
+}
+
+function steps() {
+  const runs = observedRuns();
+  const hasBaseline = DATA.baselines.length > 0;
+  const failing = DATA.doctor.filter((r) => r.status !== "PASS").length;
+  return [
+    { id: "tools", view: "start", title: "Check the tools",
+      why: "Confirms the tool image has the exact versions rehub was tested with.",
+      done: toolsChecked(), cli: "rehub tools",
+      summary: state.toolCheck ? (state.toolCheck.tools.every((t) => t.ok) ? "Every tool matches its pinned version." : "Some tools differ from their pinned version.") : (DATA.tools.length ? `${DATA.tools.length} tool versions recorded by earlier runs.` : "") },
+    { id: "capture", view: "traffic", title: "Analyze a capture",
+      why: "Reads a pcap with Zeek, Suricata and tshark. Nothing is sent to any network.",
+      done: runs.length > 0, cli: "rehub analyze capture.pcap",
+      summary: runs.length ? `${runs.length} capture${runs.length === 1 ? "" : "s"} analyzed.` : "" },
+    { id: "baseline", view: "changes", title: "Freeze normal as a baseline",
+      why: "Saves which host pairs and actions you expect. A saved baseline can never be changed.",
+      done: hasBaseline, locked: runs.length === 0 ? "Analyze a capture first." : null, cli: "rehub baseline save plant-normal --run 1",
+      summary: hasBaseline ? `Baseline ${DATA.baselines[DATA.baselines.length - 1].name} has ${DATA.baselines[DATA.baselines.length - 1].count} items.` : "" },
+    { id: "compare", view: "changes", title: "Compare a new capture",
+      why: "Analyze a later capture and see what is new or missing against the baseline.",
+      done: hasBaseline && runs.length >= 2, locked: hasBaseline ? null : "Save a baseline first.", cli: "rehub baseline diff plant-normal --run 4",
+      summary: hasBaseline && runs.length >= 2 ? "A later capture is ready to compare." : "" },
+    { id: "doctor", view: "doctor", title: "Check your tools before an upgrade",
+      why: "Replays test captures through every tool and names what a new version changes.",
+      done: DATA.doctor.length > 0, cli: "rehub doctor",
+      summary: DATA.doctor.length ? (failing ? `${failing} fixture${failing === 1 ? "" : "s"} differ from the golden output.` : "Every tool matches its golden output.") : "" },
+    { id: "rules", view: "rules", title: "Write a detection rule", optional: true,
+      why: "Optional. Draft a YARA rule with a model, then have it compiled and tested on your samples.",
+      done: DATA.rules.length > 0, cli: 'rehub yara draft "what to detect" --positive sample.bin',
+      summary: DATA.rules.length ? `${DATA.rules.length} rule${DATA.rules.length === 1 ? "" : "s"} stored.` : "" },
+  ];
+}
+
+function nextStep() {
+  return steps().find((st) => !st.done && !st.optional && !st.locked) || null;
+}
+
+function stepBody(st, all) {
+  const runs = observedRuns();
+  const parts = [];
+  if (!LIVE) {
+    parts.push(h("p", { class: "cli" }, "Command line: ", h("code", {}, st.cli)));
+    return parts;
+  }
+  if (st.id === "tools") {
+    parts.push(btn("Check tool versions", checkTools, !st.done), toolCheckCard());
+  } else if (st.id === "capture" && !st.done) {
+    parts.push(dropZone());
+    if (state.samples.length) {
+      parts.push(h("div", { class: "row", style: "margin-top:10px; align-items:center" },
+        h("span", {}, "Or try a bundled sample:"), ...state.samples.map((n) => btn(n, () => analyzeSample(n), false))));
+    }
+  } else if (st.id === "capture" && st.done) {
+    parts.push(btn("See the traffic", () => { state.view = "traffic"; render(); }, false));
+  } else if (st.id === "baseline" && runs.length && !st.done) {
+    parts.push(
+      select("Capture to freeze", runs.map((r) => ({ value: String(r.id), label: runLabel(r) })), String(state.run), (v) => { state.run = Number(v); render(); }),
+      h("div", { style: "height:12px" }), baselineForm(state.run));
+  } else if (st.id === "compare" && all.find((x) => x.id === "baseline").done) {
+    if (runs.length < 2) {
+      parts.push(dropZone());
+      if (state.samples.length) {
+        parts.push(h("div", { class: "row", style: "margin-top:10px; align-items:center" },
+          h("span", {}, "Or try a bundled sample:"), ...state.samples.map((n) => btn(n, () => analyzeSample(n), false))));
+      }
+    } else {
+      parts.push(h("div", { class: "row" },
+        btn("See the changes", () => { state.view = "changes"; render(); }, true),
+        h("span", {}, "Analyze another capture any time from the Traffic page.")));
+    }
+  } else if (st.id === "doctor") {
+    parts.push(h("div", { class: "row" },
+      h("label", {}, "Image (blank for " + (DATA.image || "the default") + ")",
+        h("input", { type: "text", placeholder: DATA.image || "rehub:pinned", value: state.doctorImage, oninput: (e) => { state.doctorImage = e.target.value; } })),
+      btn(st.done ? "Run doctor again" : "Run doctor", runDoctor, !st.done),
+      st.done ? btn("See the results", () => { state.view = "doctor"; render(); }, false) : null));
+  } else if (st.id === "rules") {
+    parts.push(btn("Open Rules", () => { state.view = "rules"; render(); }, false));
+  }
+  return parts;
+}
+
+function viewStart() {
+  const all = steps();
+  const next = nextStep();
+  return [
+    h("h1", {}, "Start"),
+    h("p", { class: "lede" }, "rehub reviews traffic from your control network without touching it. Work down this list: freeze what normal looks like, then check every later capture, and your tools, against it."),
+    h("ol", { class: "flow" }, all.map((st, i) => {
+      const isNext = next && next.id === st.id;
+      const status = st.done ? "Done" : st.locked ? st.locked : isNext ? "Do this next" : st.optional ? "Optional" : "Later";
+      return h("li", { class: `step${st.done ? " done" : ""}${isNext ? " next" : ""}${st.locked ? " locked" : ""}`, "aria-current": isNext ? "step" : false },
+        h("div", { class: "step-head" },
+          h("h2", {}, st.title),
+          h("span", { class: "step-status" }, status)),
+        h("p", { class: "why" }, st.why),
+        st.summary ? h("p", { class: "summary" }, st.summary) : null,
+        st.locked ? null : h("div", { class: "step-body" }, stepBody(st, all)));
+    })),
+  ];
+}
+
+function nextLine() {
+  const next = nextStep();
+  if (!next || state.view === "start") return null;
+  return h("p", { class: "nextline" }, "Next step: ", h("strong", {}, next.title), " ",
+    h("button", { type: "button", class: "link", onclick: () => { state.view = "start"; location.hash = "start"; render(); } }, "Go to Start"));
 }
 
 /* ---- views ---- */
@@ -805,12 +944,15 @@ function render() {
   renderNav();
   annunciator();
   banner();
-  const body = { changes: viewChanges, traffic: viewTraffic, doctor: viewDoctor, rules: viewRules }[state.view]();
+  const body = { start: viewStart, changes: viewChanges, traffic: viewTraffic, doctor: viewDoctor, rules: viewRules }[state.view]();
+  const line = LIVE ? nextLine() : null;
+  if (line) body.splice(1, 0, line);
   document.getElementById("view").replaceChildren(...body);
 }
 
 async function init() {
   const wanted = location.hash.slice(1);
+  if (!LIVE) state.view = "changes";
   if (VIEWS.some((v) => v.id === wanted)) state.view = wanted;
   if (LIVE) {
     try {

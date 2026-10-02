@@ -1,4 +1,4 @@
-"""Drive the live interface in a real browser. Not part of the test suite.
+"""Walk the guided flow in a real browser. Not part of the test suite.
 
 Start `rehub web --port 8765` with an empty REHUB_HOME first, then:
     uv run --no-project --with playwright python scripts/ui_e2e.py
@@ -6,17 +6,24 @@ Needs Google Chrome and the tool image. Screenshots go to a temporary directory.
 """
 
 import tempfile
-from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-ROOT = str(Path(__file__).resolve().parents[1])
 OUT = tempfile.mkdtemp(prefix="rehub-ui-")
 errors = []
 
+
+def nxt(page):
+    return (
+        page.locator(".step.next h2").inner_text()
+        if page.locator(".step.next").count()
+        else "(none)"
+    )
+
+
 with sync_playwright() as p:
     browser = p.chromium.launch(channel="chrome", headless=True)
-    page = browser.new_page(viewport={"width": 1440, "height": 900})
+    page = browser.new_page(viewport={"width": 1440, "height": 1100})
     page.on("pageerror", lambda e: errors.append(f"pageerror: {e}"))
     page.on(
         "console",
@@ -25,60 +32,42 @@ with sync_playwright() as p:
         ),
     )
     page.goto("http://127.0.0.1:8765/")
-    page.wait_for_selector("#nav button")
-    page.screenshot(path=f"{OUT}/l1.png")
+    page.wait_for_selector(".step")
+    print("lands on:", page.locator("h1").inner_text(), "| next:", nxt(page))
+    page.screenshot(path=f"{OUT}/f1.png", full_page=True)
 
-    # analyze normal capture through the drop zone input
-    page.get_by_role("button", name="Traffic", exact=True).click()
-    page.set_input_files("input[type=file]", f"{ROOT}/fixtures/scenarios/plant_normal.pcap")
-    page.wait_for_selector(".banner:not(.busy)", timeout=180000)
-    page.wait_for_selector(".toolrow")
-    print("after analyze banner:", page.inner_text("#banner"))
-    page.screenshot(path=f"{OUT}/l2.png")
+    page.get_by_role("button", name="Check tool versions").click()
+    page.wait_for_selector(".step:has-text('Every tool matches')", timeout=120000)
+    print("after tools | next:", nxt(page))
 
-    # save baseline from the analysis card
-    page.fill("input[type=text]", "plant-normal")
-    page.get_by_role("button", name="Save baseline").click()
-    page.wait_for_selector(".banner:has-text('Saved baseline')", timeout=30000)
-    print("baseline banner:", page.inner_text("#banner"))
+    page.locator(".step.next").get_by_role("button", name="plant_normal", exact=True).click()
+    page.wait_for_selector(".step.done:has-text('1 capture analyzed')", timeout=180000)
+    print("after capture | next:", nxt(page), "| view:", page.locator("h1").inner_text())
 
-    # analyze the changed capture
-    page.get_by_role("button", name="Traffic", exact=True).click()
-    page.set_input_files("input[type=file]", f"{ROOT}/fixtures/scenarios/plant_changed.pcap")
-    page.wait_for_selector(".banner:has-text('Analyzed plant_changed')", timeout=180000)
-    page.get_by_role("button", name="Changes", exact=True).click()
+    page.fill(".step.next input[type=text]", "plant-normal")
+    page.locator(".step.next").get_by_role("button", name="Save baseline").click()
+    page.wait_for_selector(".step.done:has-text('Baseline plant-normal')", timeout=30000)
+    print("after baseline | next:", nxt(page))
+    page.screenshot(path=f"{OUT}/f2.png", full_page=True)
+
+    page.locator(".step.next").get_by_role("button", name="plant_changed", exact=True).click()
+    page.wait_for_selector(".step.done:has-text('later capture is ready')", timeout=180000)
+    print("after compare | next:", nxt(page))
+    page.get_by_role("button", name="See the changes").click()
     page.wait_for_selector(".rung.new-pair")
     print(
-        "lit:",
+        "changes: lit windows:",
         page.locator(".win.lit").count(),
-        "new-pair rungs:",
-        page.locator(".rung.new-pair").count(),
-        "new-action:",
-        page.locator(".rung.new-action").count(),
-        "missing:",
-        page.locator(".rung.missing-pair").count(),
+        "| nextline:",
+        page.locator(".nextline").inner_text(),
     )
-    page.screenshot(path=f"{OUT}/l3.png")
-
-    # yara scan
-    page.get_by_role("button", name="Rules", exact=True).click()
-    page.fill("textarea", 'rule T { strings: $a = "P_PROGRAM" condition: $a }')
-    page.set_input_files("input[type=file]", f"{ROOT}/fixtures/yara/samples/s7_stop_payload.bin")
-    page.get_by_role("button", name="Scan").click()
-    page.wait_for_selector(".matches li", timeout=60000)
-    print("yara:", page.inner_text(".matches"))
-    page.screenshot(path=f"{OUT}/l4.png")
-
-    # doctor
-    page.get_by_role("button", name="Doctor", exact=True).click()
+    page.screenshot(path=f"{OUT}/f3.png")
+    page.get_by_role("button", name="Go to Start").click()
     page.get_by_role("button", name="Run doctor").click()
-    page.wait_for_selector(".banner:has-text('Every tool matches')", timeout=300000)
-    print("doctor:", page.inner_text("#banner"))
-    page.get_by_role("button", name="Check tool versions").click()
-    page.wait_for_selector(".toolrow:has-text('suricata')", timeout=120000)
-    page.screenshot(path=f"{OUT}/l5.png", full_page=True)
+    page.wait_for_selector(".step.done:has-text('Every tool matches its golden')", timeout=300000)
+    print("after doctor | next:", nxt(page))
+    page.screenshot(path=f"{OUT}/f4.png", full_page=True)
     browser.close()
-
 print("screenshots:", OUT)
 print("errors:", errors)
 raise SystemExit(1 if errors else 0)

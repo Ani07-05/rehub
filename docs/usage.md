@@ -96,6 +96,10 @@ Serves the interface at `http://127.0.0.1:8765/` on this computer only. There is
 `Host` header is not loopback (DNS rebinding) and any POST without its `X-Rehub` header (other
 websites).
 
+- **Start:** the guided path. Six steps in order, each with its action on the same page: check the
+  tools, analyze a capture, freeze a baseline, compare a new capture, run doctor before a tool
+  upgrade, and optionally draft a rule. The next step is marked, steps that need an earlier one
+  are locked, and every other page shows what to do next.
 - **Traffic:** drop a `.pcap` or `.pcapng`. It is analyzed with Zeek, Suricata and tshark (tools
   run with no network), stored, and drawn as host pair rungs. Captures up to 256 MB.
 - **Changes:** pick a baseline and a capture. Red rungs are new host pairs, amber rungs are new
