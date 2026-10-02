@@ -1,17 +1,20 @@
 import base64
 import binascii
 import hashlib
+import hmac
 import json
 import os
 import re
+import secrets
 import tempfile
 import threading
 from collections.abc import Callable
 from dataclasses import asdict
+from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
-from urllib.parse import unquote, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 from rehub import baseline, config, db, guide, plc, report, yara_ai
 from rehub.analyze import analyze as run_analysis
@@ -26,6 +29,9 @@ LOOPBACK = frozenset({"127.0.0.1", "::1", "localhost"})
 MAX_PCAP = 256 * 1024 * 1024
 MAX_JSON = 32 * 1024 * 1024
 CSRF_HEADER = "X-Rehub"
+COOKIE = "rehub_session"
+
+LOCKED_PAGE = Path(__file__).parent / "static" / "locked.html"
 
 Json = dict[str, Any]
 
@@ -444,6 +450,7 @@ def _store_upload(handler: BaseHTTPRequestHandler) -> tuple[str, Path]:
 
 class Handler(BaseHTTPRequestHandler):
     api = Api()
+    token: str | None = None
     server_version = "rehub"
 
     def log_message(self, format: str, *args: Any) -> None:
@@ -456,6 +463,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Referrer-Policy", "no-referrer")
         self.send_header(
             "Content-Security-Policy",
             "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; "
@@ -467,9 +475,46 @@ class Handler(BaseHTTPRequestHandler):
     def _json(self, status: int, obj: Json) -> None:
         self._send(status, json.dumps(obj).encode(), "application/json")
 
+    def _token_ok(self, candidate: str | None) -> bool:
+        return (
+            self.token is not None
+            and candidate is not None
+            and hmac.compare_digest(candidate.encode(), self.token.encode())
+        )
+
+    def _has_session(self) -> bool:
+        jar = SimpleCookie()
+        try:
+            jar.load(self.headers.get("Cookie", ""))
+        except Exception:
+            return False
+        morsel = jar.get(COOKIE)
+        return self._token_ok(morsel.value if morsel else None)
+
+    def _locked(self, wants_page: bool) -> None:
+        if wants_page:
+            self._send(401, LOCKED_PAGE.read_bytes(), "text/html; charset=utf-8")
+        else:
+            self._json(401, {"error": "locked: open the link printed by rehub web"})
+
     def _guard(self, post: bool) -> bool:
         if not host_allowed(self.headers.get("Host")):
             self._json(403, {"error": "unexpected Host header"})
+            return False
+        if self.token is not None and not self._has_session():
+            url = urlparse(self.path)
+            offered = parse_qs(url.query).get("token", [None])[0]
+            if not post and url.path == "/" and self._token_ok(offered):
+                self.send_response(302)
+                self.send_header("Location", "/")
+                self.send_header(
+                    "Set-Cookie", f"{COOKIE}={self.token}; HttpOnly; SameSite=Strict; Path=/"
+                )
+                self.send_header("Referrer-Policy", "no-referrer")
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return False
+            self._locked(wants_page=not post and not url.path.startswith("/api/"))
             return False
         if post and self.headers.get(CSRF_HEADER) != "1":
             self._json(403, {"error": f"missing {CSRF_HEADER} header"})
@@ -542,9 +587,15 @@ class Handler(BaseHTTPRequestHandler):
             self._json(404, {"error": "not found"})
 
 
-def make_server(host: str, port: int, image: str | None = None) -> ThreadingHTTPServer:
+def new_token() -> str:
+    return secrets.token_urlsafe(24)
+
+
+def make_server(
+    host: str, port: int, image: str | None = None, token: str | None = None
+) -> ThreadingHTTPServer:
     check_bind(host)
-    handler = type("BoundHandler", (Handler,), {"api": Api(image)})
+    handler = type("BoundHandler", (Handler,), {"api": Api(image), "token": token})
     return ThreadingHTTPServer((host, port), handler)
 
 

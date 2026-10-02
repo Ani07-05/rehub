@@ -460,3 +460,141 @@ def test_demo_runs_both_samples_and_saves_the_baseline_once(
     assert isinstance(state, dict)
     assert [b["name"] for b in state["baselines"]] == ["plant-normal"]
     assert state["device_labels"]["10.0.0.20"] == "Main boiler"
+
+
+TOKEN = "s3cret-token-value"
+
+
+@pytest.fixture
+def locked(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[ThreadingHTTPServer]:
+    monkeypatch.setenv("REHUB_HOME", str(tmp_path))
+    srv = web.make_server("127.0.0.1", 0, token=TOKEN)
+    web.serve_in_thread(srv)
+    yield srv
+    srv.shutdown()
+    srv.server_close()
+
+
+def raw(
+    srv: ThreadingHTTPServer,
+    path: str,
+    method: str = "GET",
+    headers: dict[str, str] | None = None,
+    body: bytes | None = None,
+) -> tuple[int, dict[str, str], str]:
+    import http.client
+
+    port = srv.server_address[1]
+    conn = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
+    all_headers = {"Host": f"127.0.0.1:{port}", **(headers or {})}
+    conn.request(method, path, body=body, headers=all_headers)
+    res = conn.getresponse()
+    text = res.read().decode()
+    out = (res.status, {k.lower(): v for k, v in res.getheaders()}, text)
+    conn.close()
+    return out
+
+
+def test_without_the_token_nothing_is_served(locked: ThreadingHTTPServer) -> None:
+    status, _, page = raw(locked, "/")
+    assert status == 401
+    assert "This rehub is locked" in page
+    assert "const EMBEDDED" not in page
+    status, _, body = raw(locked, "/api/state")
+    assert status == 401
+    assert "locked" in json.loads(body)["error"]
+    status, _, _ = raw(
+        locked,
+        "/api/baselines",
+        "POST",
+        {"X-Rehub": "1", "Content-Type": "application/json"},
+        b"{}",
+    )
+    assert status == 401
+
+
+@pytest.mark.parametrize("candidate", ["", "wrong", TOKEN[:-1], TOKEN + "x"])
+def test_wrong_token_is_refused(locked: ThreadingHTTPServer, candidate: str) -> None:
+    status, headers, _ = raw(locked, f"/?token={candidate}")
+    assert status == 401
+    assert "set-cookie" not in headers
+
+
+def test_right_token_sets_a_strict_cookie_and_hides_itself(locked: ThreadingHTTPServer) -> None:
+    status, headers, _ = raw(locked, f"/?token={TOKEN}")
+    assert status == 302
+    assert headers["location"] == "/"
+    cookie = headers["set-cookie"]
+    assert "HttpOnly" in cookie
+    assert "SameSite=Strict" in cookie
+    assert headers["referrer-policy"] == "no-referrer"
+    session = cookie.split(";", 1)[0]
+    status, _, page = raw(locked, "/", headers={"Cookie": session})
+    assert status == 200
+    assert "const EMBEDDED" in page
+    status, _, body = raw(locked, "/api/state", headers={"Cookie": session})
+    assert status == 200
+    assert "runs" in json.loads(body)
+
+
+def test_token_is_not_accepted_on_api_paths(locked: ThreadingHTTPServer) -> None:
+    status, headers, _ = raw(locked, f"/api/state?token={TOKEN}")
+    assert status == 401
+    assert "set-cookie" not in headers
+
+
+def test_a_session_still_needs_the_csrf_header_for_posts(locked: ThreadingHTTPServer) -> None:
+    _, headers, _ = raw(locked, f"/?token={TOKEN}")
+    session = headers["set-cookie"].split(";", 1)[0]
+    status, _, _ = raw(locked, "/api/baselines", "POST", {"Cookie": session}, b"{}")
+    assert status == 403
+    status, _, _ = raw(
+        locked,
+        "/api/baselines",
+        "POST",
+        {"Cookie": session, "X-Rehub": "1", "Content-Type": "application/json"},
+        b"{}",
+    )
+    assert status == 400
+
+
+def test_a_forged_cookie_is_refused(locked: ThreadingHTTPServer) -> None:
+    status, _, _ = raw(locked, "/api/state", headers={"Cookie": "rehub_session=forged"})
+    assert status == 401
+    status, _, _ = raw(locked, "/api/state", headers={"Cookie": "other=1; ;;"})
+    assert status == 401
+
+
+def test_new_tokens_are_long_and_unique() -> None:
+    first, second = web.new_token(), web.new_token()
+    assert first != second
+    assert len(first) >= 30
+
+
+def test_cli_prints_the_private_link(monkeypatch: pytest.MonkeyPatch) -> None:
+    from typer.testing import CliRunner
+
+    from rehub import cli
+
+    class Fake:
+        def serve_forever(self) -> None:
+            raise KeyboardInterrupt
+
+        def server_close(self) -> None:
+            pass
+
+    seen: dict[str, object] = {}
+
+    def fake_make(host: str, port: int, image: str | None, token: str | None) -> Fake:
+        seen["token"] = token
+        return Fake()
+
+    monkeypatch.setattr(web, "make_server", fake_make)
+    result = CliRunner().invoke(cli.app, ["web", "--port", "9999"])
+    assert result.exit_code == 0
+    assert f"?token={seen['token']}" in result.output
+    assert seen["token"]
+    result = CliRunner().invoke(cli.app, ["web", "--no-token"])
+    assert seen["token"] is None
+    assert "WARNING" in result.output
+    assert "?token=" not in result.output

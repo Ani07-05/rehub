@@ -354,15 +354,26 @@ def web(
     port: int = typer.Option(8765, help="Port to listen on."),
     image: str | None = typer.Option(None, help="Docker image to run tools in."),
     open_browser: bool = typer.Option(False, "--open", help="Open the page in your browser."),
+    no_token: bool = typer.Option(
+        False, "--no-token", help="Skip the private link. Anyone on this computer can then use it."
+    ),
 ) -> None:
-    """Serve the interface on this computer only. No login, so it never leaves loopback."""
+    """Serve the interface on this computer only, behind a private link."""
+    token = None if no_token else web_app.new_token()
     try:
-        server = web_app.make_server(host, port, image)
+        server = web_app.make_server(host, port, image, token)
     except (ValueError, OSError) as exc:
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(2) from exc
-    url = f"http://{host if host != '::1' else '[::1]'}:{port}/"
-    typer.echo(f"rehub is at {url} (this computer only). Press Ctrl-C to stop.")
+    shown = host if host != "::1" else "[::1]"
+    url = f"http://{shown}:{port}/" + (f"?token={token}" if token else "")
+    typer.echo("rehub is running on this computer only. Open this private link:")
+    typer.echo(f"  {url}")
+    if token:
+        typer.echo("The link is secret and changes each time you start rehub.")
+    else:
+        typer.echo("WARNING: no private link. Anyone logged in to this computer can use it.")
+    typer.echo("Press Ctrl-C to stop.")
     if open_browser:
         webbrowser.open(url)
     try:
