@@ -6,6 +6,9 @@ Diff = dict[str, Any]
 
 
 def _short(row: dict[str, Any], limit: int = 140) -> str:
+    alert = row.get("alert")
+    if isinstance(alert, dict) and "signature" in alert:
+        return f"alert {alert['signature']!r} (sid {alert.get('signature_id')})"
     text = _key(row)
     return text if len(text) <= limit else text[: limit - 3] + "..."
 
