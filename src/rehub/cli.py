@@ -7,7 +7,7 @@ import typer
 
 from rehub import baseline as baselines
 from rehub import capture as packet_capture
-from rehub import config, db, yara_ai, yara_fetch
+from rehub import config, db, plc, yara_ai, yara_fetch
 from rehub import report as report_page
 from rehub import web as web_app
 from rehub.analyze import analyze as run_analysis
@@ -371,3 +371,91 @@ def web(
         typer.echo("stopped")
     finally:
         server.server_close()
+
+
+plc_app = typer.Typer(no_args_is_help=True, help="Review PLC program source and compare versions.")
+app.add_typer(plc_app, name="plc")
+
+SEVERITY_LABEL = {"high": "HIGH", "medium": "MEDIUM", "low": "LOW"}
+MAX_PLC_BYTES = 20 * 1024 * 1024
+
+
+def _read_program(path: Path) -> str:
+    if path.stat().st_size > MAX_PLC_BYTES:
+        typer.echo("error: file is larger than 20 MB", err=True)
+        raise typer.Exit(2)
+    return path.read_text(errors="replace")
+
+
+@plc_app.command("approve")
+def plc_approve(
+    file: Path = typer.Argument(..., exists=True, dir_okay=False, readable=True),
+    name: str = typer.Option(..., "--name", help="Name of the program or controller."),
+) -> None:
+    """Save a program as the approved version. Saved versions cannot be changed."""
+    conn = db.connect()
+    try:
+        version = db.approve_plc_program(conn, name, file.name, _read_program(file))
+    finally:
+        conn.close()
+    typer.echo(f"approved {name} (version {version})")
+
+
+@plc_app.command("list")
+def plc_list() -> None:
+    """List approved programs."""
+    conn = db.connect()
+    try:
+        rows = db.list_plc_programs(conn)
+    finally:
+        conn.close()
+    for row in rows:
+        typer.echo(f"{row['id']}  {row['name']}  {row['filename']}  {row['approved_at']}")
+    if not rows:
+        typer.echo("no approved programs yet")
+
+
+@plc_app.command("check")
+def plc_check(
+    file: Path = typer.Argument(..., exists=True, dir_okay=False, readable=True),
+    against: str | None = typer.Option(None, "--against", help="Approved program name."),
+) -> None:
+    """Review a program for risky patterns and compare it with the approved version.
+
+    This is a heuristic review, not a vulnerability scan. Exits 1 if it finds high severity
+    patterns or new risky patterns compared with the approved version.
+    """
+    text = _read_program(file)
+    findings = plc.analyze(text)
+    name = against or file.stem
+    conn = db.connect()
+    try:
+        approved = db.latest_plc_program(conn, name)
+    finally:
+        conn.close()
+    typer.echo(f"{file.name}: {len(findings)} thing(s) to review")
+    for item in findings:
+        typer.echo(f"  {SEVERITY_LABEL[item.severity]:<6} line {item.line}: {item.title}")
+        typer.echo(f"         {item.code}")
+        typer.echo(f"         why: {item.why}")
+        typer.echo(f"         check: {item.check}")
+    risky = any(f.severity == "high" for f in findings)
+    if approved:
+        diff = plc.compare(approved[2], text)
+        typer.echo(f"compared with approved '{name}' (version {approved[0]}):")
+        if diff.unchanged and not diff.value_changes:
+            typer.echo("  no changes")
+        for change in diff.value_changes:
+            typer.echo(
+                f"  value changed on line {change.line}: {change.before}  ->  {change.after}"
+            )
+        for line in diff.added[:50]:
+            typer.echo(f"  + {line}")
+        for line in diff.removed[:50]:
+            typer.echo(f"  - {line}")
+        for item in diff.new_findings:
+            typer.echo(f"  NEW {SEVERITY_LABEL[item.severity]}: {item.title} (line {item.line})")
+        risky = risky or bool(diff.new_findings)
+    else:
+        typer.echo(f"no approved version named '{name}'; approve one with: rehub plc approve")
+    raise typer.Exit(1 if risky else 0)

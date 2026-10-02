@@ -6,12 +6,13 @@ import os
 import tempfile
 import threading
 from collections.abc import Callable
+from dataclasses import asdict
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlparse
 
-from rehub import baseline, config, db, report, yara_ai
+from rehub import baseline, config, db, guide, plc, report, yara_ai
 from rehub.analyze import analyze as run_analysis
 from rehub.diff import summarize
 from rehub.doctor import FIXTURES_DIR, record_reports, run_doctor
@@ -157,6 +158,89 @@ class Api:
         finally:
             conn.close()
         return {"name": name.strip(), "sha256": digest}
+
+    def plc_check(self, body: Json) -> Json:
+        filename, text = body.get("filename"), body.get("text")
+        if not isinstance(text, str) or not text.strip():
+            raise ApiError("choose a PLC program file with some text in it")
+        name = Path(str(filename or "program")).name
+        target = body.get("against") if isinstance(body.get("against"), str) else None
+        target = (target or Path(name).stem).strip()
+        findings = plc.analyze(text)
+        conn = db.connect()
+        try:
+            approved = db.latest_plc_program(conn, target)
+        finally:
+            conn.close()
+        comparison = None
+        if approved:
+            diff = plc.compare(approved[2], text)
+            comparison = {
+                "against": target,
+                "approved_id": approved[0],
+                "unchanged": diff.unchanged,
+                "added": diff.added[:200],
+                "removed": diff.removed[:200],
+                "value_changes": [asdict(v) for v in diff.value_changes[:200]],
+                "new_findings": [asdict(f) for f in diff.new_findings],
+                "resolved_findings": [asdict(f) for f in diff.resolved_findings],
+            }
+        counts = {"high": 0, "medium": 0, "low": 0}
+        for finding in findings:
+            counts[finding.severity] += 1
+        return {
+            "filename": name,
+            "name": Path(name).stem,
+            "findings": [asdict(f) for f in findings],
+            "counts": counts,
+            "comparison": comparison,
+        }
+
+    def plc_approve(self, body: Json) -> Json:
+        name, text = body.get("name"), body.get("text")
+        if not isinstance(name, str) or not name.strip():
+            raise ApiError("name the program, for example the controller or project name")
+        if not isinstance(text, str) or not text.strip():
+            raise ApiError("choose a PLC program file with some text in it")
+        conn = db.connect()
+        try:
+            program_id = db.approve_plc_program(
+                conn, name.strip(), Path(str(body.get("filename") or "program")).name, text
+            )
+        finally:
+            conn.close()
+        return {"id": program_id, "name": name.strip()}
+
+    def ask_guide(self, body: Json) -> Json:
+        question = body.get("question")
+        if not isinstance(question, str) or not question.strip() or len(question) > 1000:
+            raise ApiError("type a question of up to 1000 characters")
+        home = str(db.home())
+        answer = guide.ask(question, home)
+        if not body.get("use_model"):
+            if answer.found:
+                return {"source": "manual", "title": answer.title, "answer": answer.text}
+            return {"source": "none", "answer": None, "topics": guide.titles()}
+        try:
+            cfg = config.load()
+            provider = yara_ai.make_provider(
+                str(body.get("provider") or cfg.provider), body.get("model") or cfg.model
+            )
+        except (yara_ai.ProviderError, config.ConfigError) as exc:
+            raise ApiError(str(exc)) from exc
+        system = guide.model_system(home)
+        if provider.hosted and body.get("yes") is not True:
+            return {
+                "needs_confirmation": True,
+                "provider": provider.name,
+                "system": system,
+                "user": question.strip(),
+            }
+        try:
+            reply = provider.complete(system, question.strip())
+        except yara_ai.ProviderError as exc:
+            raise ApiError(str(exc), 502) from exc
+        return {"source": "model", "provider": provider.name, "answer": reply.strip()}
 
     def samples(self) -> Json:
         folder = FIXTURES_DIR / "scenarios"
@@ -388,6 +472,12 @@ class Handler(BaseHTTPRequestHandler):
             self._dispatch(lambda: self.api.yara_scan(self._read_json()))
         elif path == "/api/yara/draft":
             self._dispatch(lambda: self.api.yara_draft(self._read_json()))
+        elif path == "/api/plc/check":
+            self._dispatch(lambda: self.api.plc_check(self._read_json()))
+        elif path == "/api/plc/approve":
+            self._dispatch(lambda: self.api.plc_approve(self._read_json()))
+        elif path == "/api/guide":
+            self._dispatch(lambda: self.api.ask_guide(self._read_json()))
         elif path == "/api/analyze-sample":
             self._dispatch(lambda: self.api.analyze_sample(self._read_json()))
         else:

@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from rehub import baseline
+from rehub import baseline, db
 from rehub.diff import summarize
 
 TEMPLATE = Path(__file__).parent / "static" / "app.html"
@@ -86,6 +86,8 @@ def snapshot(conn: sqlite3.Connection) -> dict[str, Any]:
     ]
     return {
         "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
+        "home": str(db.home()),
+        "plc_programs": db.list_plc_programs(conn),
         "runs": run_rows,
         "observations": observations,
         "baselines": baselines,

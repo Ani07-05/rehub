@@ -313,3 +313,84 @@ def test_sample_listing_and_unknown_sample(server: ThreadingHTTPServer) -> None:
     assert status == 400
     assert isinstance(err, dict)
     assert "unknown" in err["error"]
+
+
+BOILER = "PROGRAM Boiler\nVAR\n    Setpoint : INT := 80;\nEND_VAR\nEND_PROGRAM\n"
+
+
+def test_plc_check_without_approved_version(server: ThreadingHTTPServer) -> None:
+    body = {"filename": "boiler.st", "text": BOILER + 'Password := "x";\n'}
+    status, res = call(server, "/api/plc/check", "POST", body, POST)
+    assert status == 200
+    assert isinstance(res, dict)
+    assert res["comparison"] is None
+    assert res["counts"]["high"] == 1
+    assert res["findings"][0]["why"]
+
+
+def test_plc_approve_then_compare_shows_changes(server: ThreadingHTTPServer) -> None:
+    status, _ = call(
+        server,
+        "/api/plc/approve",
+        "POST",
+        {"name": "boiler", "filename": "boiler.st", "text": BOILER},
+        POST,
+    )
+    assert status == 200
+    updated = BOILER.replace(":= 80;", ":= 120;").replace("END_PROGRAM", "STP();\nEND_PROGRAM")
+    status, res = call(
+        server, "/api/plc/check", "POST", {"filename": "boiler.st", "text": updated}, POST
+    )
+    assert status == 200
+    assert isinstance(res, dict)
+    comparison = res["comparison"]
+    assert comparison["against"] == "boiler"
+    assert comparison["value_changes"][0]["after"].endswith(":= 120;")
+    assert [f["rule"] for f in comparison["new_findings"]] == ["cpu-stop"]
+    status, state = call(server, "/api/state")
+    assert isinstance(state, dict)
+    assert state["plc_programs"][0]["name"] == "boiler"
+    assert state["home"]
+
+
+def test_plc_inputs_validated(server: ThreadingHTTPServer) -> None:
+    assert call(server, "/api/plc/check", "POST", {"text": " "}, POST)[0] == 400
+    assert call(server, "/api/plc/approve", "POST", {"name": "", "text": "x"}, POST)[0] == 400
+
+
+def test_guide_answers_from_the_manual_without_a_model(server: ThreadingHTTPServer) -> None:
+    status, res = call(
+        server, "/api/guide", "POST", {"question": "where is my database stored"}, POST
+    )
+    assert status == 200
+    assert isinstance(res, dict)
+    assert res["source"] == "manual"
+    assert "rehub.db" in res["answer"]
+    status, res = call(
+        server, "/api/guide", "POST", {"question": "how tall is the eiffel tower"}, POST
+    )
+    assert isinstance(res, dict)
+    assert res["source"] == "none"
+    assert res["topics"]
+
+
+def test_guide_hosted_model_needs_confirmation_and_never_gets_more(
+    server: ThreadingHTTPServer, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    provider = FakeProvider(hosted=True, replies=["an answer"])
+    monkeypatch.setattr(yara_ai, "make_provider", lambda name, model: provider)
+    body = {"question": "explain new action", "use_model": True, "provider": "anthropic"}
+    status, res = call(server, "/api/guide", "POST", body, POST)
+    assert isinstance(res, dict)
+    assert res["needs_confirmation"] is True
+    assert provider.sent == []
+    assert "MANUAL" in res["system"]
+    status, res = call(server, "/api/guide", "POST", {**body, "yes": True}, POST)
+    assert isinstance(res, dict)
+    assert res["answer"] == "an answer"
+    assert provider.sent == ["explain new action"]
+
+
+def test_guide_validates_question(server: ThreadingHTTPServer) -> None:
+    assert call(server, "/api/guide", "POST", {"question": ""}, POST)[0] == 400
+    assert call(server, "/api/guide", "POST", {"question": "x" * 1001}, POST)[0] == 400
