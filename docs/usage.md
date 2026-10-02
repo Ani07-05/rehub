@@ -102,8 +102,11 @@ websites).
   actions, dashed rungs are pairs not seen. Save the capture as a new baseline from here. An
   existing baseline can never be changed.
 - **Doctor:** run doctor against the default image or a candidate image, and check tool versions.
-- **Rules:** scan a sample file with a pasted YARA rule. Drafted rules show Validated or
-  Unvalidated. Drafting itself stays on the command line.
+- **Rules:** draft a rule with a model (pick local Ollama or hosted, add sample files it must
+  match and clean files it must not), or scan a sample with a pasted rule. For a hosted model the
+  page first shows the exact text that would be sent and sends nothing until you press the send
+  button. Sample files stay on this computer. Drafted rules show Validated or Unvalidated.
+- **Traffic** also offers the bundled sample captures with one click.
 
 The page needs nothing from the internet. Stop the server with Ctrl-C.
 
