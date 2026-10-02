@@ -8,6 +8,7 @@ import typer
 from rehub import baseline as baselines
 from rehub import capture as packet_capture
 from rehub import config, db, plc, yara_ai, yara_fetch
+from rehub import image as tool_image
 from rehub import report as report_page
 from rehub import web as web_app
 from rehub.analyze import analyze as run_analysis
@@ -74,8 +75,28 @@ def init(
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(2) from exc
     if not ok:
-        typer.echo("tool versions differ from the pins; build the image from docker/Dockerfile")
+        typer.echo("tool versions differ from the pins; run: rehub setup")
     raise typer.Exit(0 if ok else 1)
+
+
+@app.command()
+def setup(
+    image: str | None = typer.Option(None, help=f"Local image name (default {DEFAULT_IMAGE})."),
+    source: str | None = typer.Option(
+        None, help="Registry image to pull first. Falls back to building from docker/Dockerfile."
+    ),
+) -> None:
+    """Get the tool image: pull it if a registry image is known, else build it."""
+    try:
+        cfg = config.load()
+        name = image or cfg.image
+        typer.echo(f"image {name}: checking")
+        how = tool_image.ensure(name, source or cfg.registry_image)
+    except (RunnerError, config.ConfigError) as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(2) from exc
+    typer.echo(f"image {name}: {how}")
+    raise typer.Exit(0 if _check_tools(name) else 1)
 
 
 @app.command()

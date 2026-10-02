@@ -10,6 +10,7 @@ DEFAULT_TEXT = f"""# rehub configuration. Environment variables and flags overri
 image = "{DEFAULT_IMAGE}"
 provider = "ollama"
 # model = "your-ollama-model"
+# registry_image = "ghcr.io/OWNER/rehub:0.1.0"
 """
 
 
@@ -22,6 +23,7 @@ class Config:
     image: str = DEFAULT_IMAGE
     provider: str = "ollama"
     model: str | None = None
+    registry_image: str | None = None
 
 
 def path() -> Path:
@@ -41,6 +43,7 @@ def load() -> Config:
         image=str(data.get("image", defaults.image)),
         provider=str(data.get("provider", defaults.provider)),
         model=str(data["model"]) if "model" in data else None,
+        registry_image=str(data["registry_image"]) if "registry_image" in data else None,
     )
 
 

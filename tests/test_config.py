@@ -40,4 +40,4 @@ def test_init_creates_files_and_reports_mismatch(
     assert result.exit_code == 1
     assert (home / "config.toml").exists()
     assert (home / "rehub.db").exists()
-    assert "build the image" in result.output
+    assert "rehub setup" in result.output

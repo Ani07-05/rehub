@@ -69,9 +69,14 @@ class DockerRunner:
             targets[token] = target
         cmd += [self.image, *[targets.get(a, a) for a in argv]]
         try:
-            return subprocess.run(cmd, capture_output=True, text=True, check=False)
+            proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
         except FileNotFoundError as exc:
             raise RunnerError("docker not found on PATH") from exc
+        if "Unable to find image" in proc.stderr:
+            raise RunnerError(f"image {self.image} is not on this computer. Run: rehub setup")
+        if "Cannot connect to the Docker daemon" in proc.stderr:
+            raise RunnerError("Docker is not running. Start Docker Desktop, then try again.")
+        return proc
 
 
 def default_runner(image: str | None = None) -> Runner:
