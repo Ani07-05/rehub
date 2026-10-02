@@ -9,6 +9,7 @@ Normalized = dict[str, Any]
 class Tool(Protocol):
     NAME: str
     PINNED: dict[str, str]
+    FIXTURES: tuple[str, str]
 
     def installed(self, runner: Runner, workdir: Path) -> dict[str, str]: ...
 

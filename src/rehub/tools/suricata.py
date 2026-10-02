@@ -8,6 +8,7 @@ from rehub.tools import Normalized
 
 NAME = "suricata"
 PINNED = {"suricata": "8.0.7"}
+FIXTURES = ("pcaps", "*.pcap")
 CONFIG = "/opt/suricata/etc/suricata/suricata.yaml"
 RULES = "/opt/rehub/suricata/rehub.rules"
 SETTINGS = {

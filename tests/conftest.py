@@ -1,5 +1,5 @@
 import subprocess
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 
@@ -16,7 +16,12 @@ class FakeRunner:
         )
 
     def run(
-        self, argv: Sequence[str], *, workdir: Path, input_file: Path | None = None
+        self,
+        argv: Sequence[str],
+        *,
+        workdir: Path,
+        input_file: Path | None = None,
+        extra: Mapping[str, Path] | None = None,
     ) -> subprocess.CompletedProcess[str]:
         out = ""
         err = ""

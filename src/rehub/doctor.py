@@ -32,7 +32,7 @@ class ToolReport:
 
     @property
     def version(self) -> str:
-        return self.installed.get(self.tool, "unknown")
+        return self.installed.get(self.tool) or next(iter(self.installed.values()), "unknown")
 
 
 def golden_path(fixtures: Path, tool: str, fixture: str) -> Path:
@@ -46,7 +46,8 @@ def _dump(doc: dict[str, Any]) -> str:
 def check_tool(
     tool: Tool, runner: Runner, fixtures: Path = FIXTURES_DIR, accept: bool = False
 ) -> ToolReport:
-    pcaps = sorted((fixtures / "pcaps").glob("*.pcap"))
+    subdir, pattern = tool.FIXTURES
+    pcaps = sorted(p for p in (fixtures / subdir).glob(pattern) if p.is_file())
     with tempfile.TemporaryDirectory(prefix="rehub-doctor-") as tmp:
         installed = tool.installed(runner, Path(tmp))
     results = []

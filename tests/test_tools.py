@@ -1,5 +1,5 @@
 import subprocess
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from rehub.tools import suricata, tshark
@@ -11,7 +11,12 @@ class Canned:
         self.calls: list[list[str]] = []
 
     def run(
-        self, argv: Sequence[str], *, workdir: Path, input_file: Path | None = None
+        self,
+        argv: Sequence[str],
+        *,
+        workdir: Path,
+        input_file: Path | None = None,
+        extra: Mapping[str, Path] | None = None,
     ) -> subprocess.CompletedProcess[str]:
         self.calls.append(list(argv))
         for name, text in self.files.items():

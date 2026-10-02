@@ -8,6 +8,7 @@ from rehub.tools import Normalized
 
 NAME = "zeek"
 PINNED = {"zeek": "8.0.10", "ICSNPP::S7COMM": "1.3.0", "ICSNPP::ENIP": "1.3.0"}
+FIXTURES = ("pcaps", "*.pcap")
 SCRIPT = "/opt/rehub/zeek/rehub.zeek"
 
 VOLATILE_FIELDS = frozenset(

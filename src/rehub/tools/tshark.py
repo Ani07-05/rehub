@@ -5,6 +5,7 @@ from rehub.tools import Normalized
 
 NAME = "tshark"
 PINNED = {"tshark": "4.4.19"}
+FIXTURES = ("pcaps", "*.pcap")
 
 FIELDS = (
     "frame.number",
