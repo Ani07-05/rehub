@@ -4,8 +4,9 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Protocol
 
+from rehub import config
+
 INPUT = "{input}"
-DEFAULT_IMAGE = "rehub:pinned"
 
 
 class RunnerError(RuntimeError):
@@ -76,4 +77,7 @@ class DockerRunner:
 def default_runner(image: str | None = None) -> Runner:
     if image is None and os.environ.get("REHUB_IN_IMAGE"):
         return LocalRunner()
-    return DockerRunner(image or DEFAULT_IMAGE)
+    try:
+        return DockerRunner(image or config.load().image)
+    except config.ConfigError as exc:
+        raise RunnerError(str(exc)) from exc

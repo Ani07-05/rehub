@@ -6,7 +6,7 @@ import pytest
 from typer.testing import CliRunner
 
 from rehub.cli import app
-from rehub.runner import DEFAULT_IMAGE
+from rehub.config import DEFAULT_IMAGE
 
 pytestmark = pytest.mark.docker
 

@@ -5,11 +5,13 @@ from pathlib import Path
 import typer
 
 from rehub import baseline as baselines
-from rehub import db, yara_ai, yara_fetch
+from rehub import capture as packet_capture
+from rehub import config, db, yara_ai, yara_fetch
 from rehub.analyze import analyze as run_analysis
+from rehub.config import DEFAULT_IMAGE
 from rehub.diff import summarize
 from rehub.doctor import FIXTURES_DIR, run_doctor
-from rehub.runner import DEFAULT_IMAGE, RunnerError, default_runner
+from rehub.runner import RunnerError, default_runner
 from rehub.tools import Tool, suricata, tshark, yara, zeek
 
 app = typer.Typer(no_args_is_help=True, add_completion=False, help="Safe OT analysis toolkit.")
@@ -20,15 +22,10 @@ PCAP_TOOLS: list[Tool] = [zeek, suricata, tshark]
 TOOLS: list[Tool] = [*PCAP_TOOLS, yara]
 
 
-@app.command()
-def tools(
-    image: str | None = typer.Option(
-        None, help=f"Docker image to inspect (default {DEFAULT_IMAGE})."
-    ),
-) -> None:
-    """List tools with pinned and installed versions."""
+def _check_tools(image: str | None) -> bool:
+    """Print pinned vs installed versions. Returns True when everything matches."""
     runner = default_runner(image)
-    mismatch = False
+    matched = True
     for tool in TOOLS:
         with tempfile.TemporaryDirectory(prefix="rehub-tools-") as tmp:
             try:
@@ -39,9 +36,43 @@ def tools(
         for component, pinned in tool.PINNED.items():
             have = found.get(component, "missing")
             status = "OK" if have == pinned else "MISMATCH"
-            mismatch |= status != "OK"
+            matched &= status == "OK"
             typer.echo(f"{component:<16} pinned {pinned:<8} installed {have:<8} {status}")
-    raise typer.Exit(1 if mismatch else 0)
+    return matched
+
+
+@app.command()
+def tools(
+    image: str | None = typer.Option(
+        None, help=f"Docker image to inspect (default {DEFAULT_IMAGE})."
+    ),
+) -> None:
+    """List tools with pinned and installed versions."""
+    raise typer.Exit(0 if _check_tools(image) else 1)
+
+
+@app.command()
+def init(
+    image: str | None = typer.Option(None, help="Docker image to check."),
+) -> None:
+    """Create the database and config file, then check the tool image."""
+    try:
+        created = config.write_default()
+    except OSError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(2) from exc
+    db.connect().close()
+    typer.echo(f"home: {db.home()}")
+    typer.echo(f"config: {config.path()} ({'created' if created else 'kept'})")
+    typer.echo(f"database: {db.home() / 'rehub.db'}")
+    try:
+        ok = _check_tools(image)
+    except config.ConfigError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(2) from exc
+    if not ok:
+        typer.echo("tool versions differ from the pins; build the image from docker/Dockerfile")
+    raise typer.Exit(0 if ok else 1)
 
 
 @app.command()
@@ -70,7 +101,7 @@ def doctor(
                 typer.echo(f"  version: {component} {have} (pinned {pinned})")
         for result in report.results:
             db.record_doctor_run(
-                conn, report.tool, report.version, image or DEFAULT_IMAGE,
+                conn, report.tool, report.version, image or config.load().image,
                 result.fixture, result.status, result.diff,
             )  # fmt: skip
             typer.echo(f"  {result.fixture}: {result.status}")
@@ -163,9 +194,13 @@ app.add_typer(yara_app, name="yara")
 PROVIDER_HELP = "LLM backend: ollama (local, default) or anthropic (hosted, needs --yes)."
 
 
-def _provider(name: str, model: str | None) -> yara_ai.Provider:
+def _provider(name: str | None, model: str | None) -> yara_ai.Provider:
     try:
-        return yara_ai.make_provider(name, model)
+        cfg = config.load()
+        return yara_ai.make_provider(name or cfg.provider, model or cfg.model)
+    except config.ConfigError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(2) from exc
     except yara_ai.ProviderError as exc:
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(2) from exc
@@ -211,7 +246,7 @@ def yara_scan(
 @yara_app.command("explain")
 def yara_explain(
     rule: Path = typer.Argument(..., exists=True, dir_okay=False, readable=True),
-    provider_name: str = typer.Option("ollama", "--provider", help=PROVIDER_HELP),
+    provider_name: str | None = typer.Option(None, "--provider", help=PROVIDER_HELP),
     model: str | None = typer.Option(None, help="Model name (or set REHUB_MODEL)."),
     yes: bool = typer.Option(False, "--yes", help="Confirm sending text to a hosted provider."),
 ) -> None:
@@ -231,7 +266,7 @@ def yara_draft(
     description: str = typer.Argument(..., help="What the rule should detect."),
     positive: list[Path] = typer.Option([], "--positive", exists=True, dir_okay=False),
     benign: Path | None = typer.Option(None, "--benign", exists=True, file_okay=False),
-    provider_name: str = typer.Option("ollama", "--provider", help=PROVIDER_HELP),
+    provider_name: str | None = typer.Option(None, "--provider", help=PROVIDER_HELP),
     model: str | None = typer.Option(None, help="Model name (or set REHUB_MODEL)."),
     yes: bool = typer.Option(False, "--yes", help="Confirm sending text to a hosted provider."),
     out: Path | None = typer.Option(None, "--out", help="Also write the rule to this file."),
@@ -278,3 +313,20 @@ def yara_fetch_rules(
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(2) from exc
     typer.echo(f"rules at {target} (commit {yara_fetch.RULES_SHA[:12]})")
+
+
+@app.command()
+def capture(
+    iface: str = typer.Option(..., "--iface", help="Interface to listen on (required)."),
+    seconds: int = typer.Option(..., "--seconds", help="How long to listen."),
+    out: Path = typer.Option(..., "--out", help="Pcap file to write; must not exist."),
+) -> None:
+    """Passive capture with tcpdump. Listens only; never transmits."""
+    try:
+        packet_capture.validate(iface, seconds, out)
+        typer.echo(packet_capture.LISTEN_ONLY.format(out=out))
+        packet_capture.capture(iface, seconds, out)
+    except packet_capture.CaptureError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(2) from exc
+    typer.echo(f"wrote {out}")
