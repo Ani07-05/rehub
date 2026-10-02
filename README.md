@@ -23,8 +23,8 @@ not replace any of them.
 - **Model-written YARA rules are untrusted.** A rule is marked `validated` only when it compiles
   and matches every sample you give it and no benign file you give it. That is a test of your
   samples, not a guarantee of detection quality.
-- **Single analyst, local only.** No live web server (the report is a static file), no
-  multi-user mode, no live PLC
+- **Single analyst, local only.** The web interface listens on loopback only and has no login,
+  so it refuses any other address. No multi-user mode, no live PLC
   access, no compliance claims.
 - **Needs Docker.** The pinned tools run inside one image. The host runs only `rehub`.
 
@@ -35,8 +35,9 @@ not replace any of them.
 2. **`rehub doctor`.** Replays bundled synthetic fixtures through every wrapped tool, normalizes
    the output, compares it to committed golden files, and names what changed. Run it against a
    candidate image before you switch sensors to it.
-3. **A report you can open.** `rehub report` writes one offline HTML page: baseline changes drawn
-   as ladder rungs, doctor results, stored runs and drafted rules.
+3. **An interface.** `rehub web` serves a local page: drop in a capture, see baseline changes
+   drawn as ladder rungs, run doctor, scan with a rule. `rehub report` writes the same view as
+   one offline HTML file.
 4. **One memory.** Runs, tool versions and baselines live in one local SQLite file, so
    "is this new?" has an answer. Baselines are immutable.
 
@@ -47,7 +48,7 @@ docker build -f docker/Dockerfile -t rehub:pinned .
 uv sync
 uv run rehub init
 uv run rehub doctor
-uv run rehub analyze fixtures/scenarios/plant_normal.pcap
+uv run rehub web --open
 ```
 
 See [docs/install.md](docs/install.md), [docs/usage.md](docs/usage.md) and

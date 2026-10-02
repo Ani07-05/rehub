@@ -85,6 +85,28 @@ Passive tcpdump for a fixed time. `--iface` is required and must be one named in
 `any`). `--seconds` is 1 to 86400. The output file must not exist. It prints that rehub only
 listens. Needs tcpdump and capture privileges, see [install.md](install.md).
 
+## web
+
+```sh
+rehub web [--port 8765] [--image IMAGE] [--open]
+```
+
+Serves the interface at `http://127.0.0.1:8765/` on this computer only. There is no login, so
+`--host` accepts loopback addresses and nothing else. The server also rejects any request whose
+`Host` header is not loopback (DNS rebinding) and any POST without its `X-Rehub` header (other
+websites).
+
+- **Traffic:** drop a `.pcap` or `.pcapng`. It is analyzed with Zeek, Suricata and tshark (tools
+  run with no network), stored, and drawn as host pair rungs. Captures up to 256 MB.
+- **Changes:** pick a baseline and a capture. Red rungs are new host pairs, amber rungs are new
+  actions, dashed rungs are pairs not seen. Save the capture as a new baseline from here. An
+  existing baseline can never be changed.
+- **Doctor:** run doctor against the default image or a candidate image, and check tool versions.
+- **Rules:** scan a sample file with a pasted YARA rule. Drafted rules show Validated or
+  Unvalidated. Drafting itself stays on the command line.
+
+The page needs nothing from the internet. Stop the server with Ctrl-C.
+
 ## report
 
 ```sh
@@ -93,7 +115,8 @@ rehub report [--out FILE.html]
 
 Writes one self-contained HTML file (default `$REHUB_HOME/report.html`) from the stored runs,
 baselines, doctor results and drafted rules. Open it in a browser. It is a read only snapshot:
-no server, no network, no external fonts or scripts, and it does not change the database.
+no server, no network, no external fonts or scripts, and it does not change the database. It is
+the same view as `rehub web`, frozen at the time you ran it.
 
 Views: **Changes** (a baseline against a capture, drawn as ladder rungs: red for a new host
 pair, amber for a new action, dashed for a pair not seen), **Traffic** (everything seen in one

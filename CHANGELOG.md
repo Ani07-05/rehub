@@ -10,6 +10,8 @@
 - `baseline save|list|diff`: immutable baselines, read only diff.
 - `yara scan|explain|draft|fetch`: YARA-X wrapper and a validated draft loop with a local or
   opt-in hosted model.
-- `report`: read only, self-contained HTML report of runs, baselines, doctor results and rules.
+- `web`: local interface (loopback only) to analyze captures, review baseline changes, run doctor
+  and scan with rules.
+- `report`: the same view as one offline, read only HTML file.
 - `init`, `tools`, `capture` (passive tcpdump).
 - CI: lint, types, tests, packet-send guard, image build with doctor.

@@ -69,6 +69,15 @@ calls run on the host, so they work with the host CLI and not from inside the im
 A hosted provider is opt-in: set `ANTHROPIC_API_KEY` and pass `--provider anthropic`. rehub
 prints the exact text it would send and sends nothing until you also pass `--yes`.
 
+## Open the interface
+
+```sh
+uv run rehub web --open
+```
+
+It listens on `127.0.0.1:8765` only and refuses any other address, so run it from the host
+CLI. It is not meant to run inside the image; the image is for the tools.
+
 ## Verify
 
 ```sh
