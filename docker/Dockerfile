@@ -32,15 +32,33 @@ RUN curl -fsSL -o /tmp/suricata.tar.gz https://www.openinfosecfoundation.org/dow
     && make install install-conf \
     && chmod -R a+rX /opt/suricata
 
+FROM ${ZEEK_IMAGE} AS yarax
+ARG TARGETARCH
+ARG YARAX_VERSION=1.21.0
+ARG YARAX_SHA256_ARM64=8d56947d82c7959a65fd4a7327d339d326649f6208c01c9f7fe7fd249e61c66a
+ARG YARAX_SHA256_AMD64=01585181e8979e36ac10ab123fcf8921cf8ba879bf942916413e091e18d64852
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+RUN case "$TARGETARCH" in \
+        arm64) arch=aarch64; sha=$YARAX_SHA256_ARM64 ;; \
+        amd64) arch=x86_64; sha=$YARAX_SHA256_AMD64 ;; \
+        *) echo "unsupported arch $TARGETARCH" >&2; exit 1 ;; \
+    esac \
+    && curl -fsSL -o /tmp/yr.tar.gz https://github.com/VirusTotal/yara-x/releases/download/v${YARAX_VERSION}/yara-x-v${YARAX_VERSION}-${arch}-unknown-linux-gnu.tar.gz \
+    && echo "${sha}  /tmp/yr.tar.gz" | sha256sum -c - \
+    && tar -xzf /tmp/yr.tar.gz -C /usr/local/bin yr
+
 FROM ${ZEEK_IMAGE}
 COPY --from=plugins /usr/local/zeek /usr/local/zeek
 COPY --from=suricata /opt/suricata /opt/suricata
+COPY --from=yarax /usr/local/bin/yr /usr/local/bin/yr
 COPY --from=ghcr.io/astral-sh/uv:0.12.21 /uv /usr/local/bin/uv
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tshark=4.4.18-0+deb13u1 \
        libpcre2-8-0 libyaml-0-2 libjansson4 libmagic1t64 libpcap0.8t64 libcap-ng0 zlib1g liblz4-1 \
     && rm -rf /var/lib/apt/lists/*
 COPY docker/zeek/rehub.zeek /opt/rehub/zeek/rehub.zeek
+COPY docker/yara/rules /opt/rehub/yara/rules
 ARG RULES_FILE=docker/suricata/rehub.rules
 COPY ${RULES_FILE} /opt/rehub/suricata/rehub.rules
 WORKDIR /opt/rehub
