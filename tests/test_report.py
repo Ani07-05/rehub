@@ -31,7 +31,7 @@ def make_run(conn: sqlite3.Connection, items: list[tuple[str, str, str, str]]) -
 
 
 def extract(html: str) -> dict[str, object]:
-    match = re.search(r"const DATA = (.*?);\s*const VIEWS", html, re.DOTALL)
+    match = re.search(r"const EMBEDDED = (.*?);\s*let DATA", html, re.DOTALL)
     assert match
     data: dict[str, object] = json.loads(match.group(1))
     return data
@@ -90,4 +90,4 @@ def test_cli_report_writes_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
     out = tmp_path / "out" / "r.html"
     result = CliRunner().invoke(cli.app, ["report", "--out", str(out)])
     assert result.exit_code == 0, result.output
-    assert "const DATA = {" in out.read_text()
+    assert "const EMBEDDED = {" in out.read_text()

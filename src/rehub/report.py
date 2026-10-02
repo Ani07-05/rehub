@@ -7,7 +7,7 @@ from typing import Any
 from rehub import baseline
 from rehub.diff import summarize
 
-TEMPLATE = Path(__file__).parent / "static" / "report.html"
+TEMPLATE = Path(__file__).parent / "static" / "app.html"
 PLACEHOLDER = "/*__REHUB_DATA__*/null"
 MAX_RUNS = 20
 
