@@ -1,4 +1,5 @@
 import tempfile
+import webbrowser
 from collections.abc import Callable
 from pathlib import Path
 
@@ -8,6 +9,7 @@ from rehub import baseline as baselines
 from rehub import capture as packet_capture
 from rehub import config, db, yara_ai, yara_fetch
 from rehub import report as report_page
+from rehub import web as web_app
 from rehub.analyze import analyze as run_analysis
 from rehub.config import DEFAULT_IMAGE
 from rehub.diff import summarize
@@ -344,3 +346,28 @@ def report(
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(html)
     typer.echo(f"wrote {target}")
+
+
+@app.command()
+def web(
+    host: str = typer.Option("127.0.0.1", help="Address to listen on. Loopback only."),
+    port: int = typer.Option(8765, help="Port to listen on."),
+    image: str | None = typer.Option(None, help="Docker image to run tools in."),
+    open_browser: bool = typer.Option(False, "--open", help="Open the page in your browser."),
+) -> None:
+    """Serve the interface on this computer only. No login, so it never leaves loopback."""
+    try:
+        server = web_app.make_server(host, port, image)
+    except (ValueError, OSError) as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(2) from exc
+    url = f"http://{host if host != '::1' else '[::1]'}:{port}/"
+    typer.echo(f"rehub is at {url} (this computer only). Press Ctrl-C to stop.")
+    if open_browser:
+        webbrowser.open(url)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        typer.echo("stopped")
+    finally:
+        server.server_close()
