@@ -14,6 +14,8 @@
   and scan with rules.
 - `plc approve|check|list`: heuristic review of PLC source and comparison with an approved
   version (not a vulnerability scan).
+- `web` is protected by a private link (random token, strict session cookie); `--no-token`
+  turns it off with a warning.
 - `web` has a one-click demo, device naming with guessed roles, a progress bar with time
   estimates, and a copy-summary button.
 - `web` is written in plain language, shows changes as sentences, has a PLC code page, shows where

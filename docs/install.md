@@ -75,7 +75,8 @@ prints the exact text it would send and sends nothing until you also pass `--yes
 uv run rehub web --open
 ```
 
-It listens on `127.0.0.1:8765` only and refuses any other address, so run it from the host
+It prints a private link (`...?token=...`) and listens on `127.0.0.1:8765` only. It refuses any
+other address, so run it from the host
 CLI. It is not meant to run inside the image; the image is for the tools.
 
 ## Verify

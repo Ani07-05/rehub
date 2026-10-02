@@ -121,11 +121,17 @@ version. Try it with `fixtures/plc/boiler_approved.st` and `fixtures/plc/boiler_
 ## web
 
 ```sh
-rehub web [--port 8765] [--image IMAGE] [--open]
+rehub web [--port 8765] [--image IMAGE] [--open] [--no-token]
 ```
 
-Serves the interface at `http://127.0.0.1:8765/` on this computer only. There is no login, so
-`--host` accepts loopback addresses and nothing else. The server also rejects any request whose
+Serves the interface on this computer only and prints a private link, for example
+`http://127.0.0.1:8765/?token=...`. Open that link once: the browser is given a session cookie
+(HttpOnly, SameSite=Strict) and the secret leaves the address bar. Without the link, or with a
+wrong one, every page and every API call answers 401 and the browser sees a "locked" page. The
+token is random, compared in constant time, kept only in memory, and changes every time rehub
+starts. `--open` opens the private link for you. `--no-token` turns this off and prints a warning:
+then anyone logged in to this computer can use rehub while it runs. `--host` accepts loopback
+addresses and nothing else. The server also rejects any request whose
 `Host` header is not loopback (DNS rebinding) and any POST without its `X-Rehub` header (other
 websites).
 

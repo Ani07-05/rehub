@@ -58,8 +58,9 @@ are compared separately and reported, not written into golden files.
 3. Baselines are immutable. The database rejects updates, deletes and late inserts.
 4. No capture data goes to any model. A model sees a rule, or your description, and nothing else.
 5. The only network calls are the optional model call and `yara fetch`.
-6. The web interface listens on loopback only, has no login, and refuses other addresses, foreign
-   `Host` headers and cross-site POSTs.
+6. The web interface listens on loopback only and is protected by a private link (a random token
+   turned into a strict session cookie). It refuses other addresses, foreign `Host` headers and
+   cross-site POSTs. It is meant for one person on their own computer, not for sharing.
 
 ## Not verified
 

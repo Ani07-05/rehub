@@ -23,8 +23,8 @@ not replace any of them.
 - **Model-written YARA rules are untrusted.** A rule is marked `validated` only when it compiles
   and matches every sample you give it and no benign file you give it. That is a test of your
   samples, not a guarantee of detection quality.
-- **Single analyst, local only.** The web interface listens on loopback only and has no login,
-  so it refuses any other address. No multi-user mode, no live PLC
+- **Single analyst, local only.** The web interface listens on loopback only behind a private link
+  (token), so it refuses any other address and other users of the same computer cannot open it. No multi-user mode, no live PLC
   access, no compliance claims.
 - **Needs Docker.** The pinned tools run inside one image. The host runs only `rehub`.
 

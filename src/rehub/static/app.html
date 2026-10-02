@@ -92,7 +92,8 @@ button, select { font: inherit; color: inherit; }
 .rail button:hover { color: var(--ink); }
 .rail .meta { margin-top: auto; padding-right: 20px; font-size: 12px; color: var(--ink-2); overflow-wrap: anywhere; }
 
-main { padding: 24px 32px 48px 24px; min-width: 0; }
+main { padding: 24px 32px 96px 24px; min-width: 0; }
+[hidden] { display: none !important; }
 
 /* annunciator: lit only when something is abnormal */
 .annunciator { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 24px; }
@@ -443,6 +444,11 @@ async function api(path, options) {
   const res = await fetch(path, { ...opts, headers: { "X-Rehub": "1", ...(opts.headers || {}) } });
   let body = null;
   try { body = await res.json(); } catch (e) { /* not JSON */ }
+  if (res.status === 401) {
+    const locked = new Error("Your session ended. rehub was restarted or its private link changed. Open the new link printed in the terminal where you ran rehub web.");
+    locked.locked = true;
+    throw locked;
+  }
   if (!res.ok) throw new Error(body && body.error ? body.error : `The server answered ${res.status}.`);
   return body;
 }
@@ -1353,8 +1359,10 @@ function annunciator() {
     ["Went quiet", d ? d.missing_pairs.length : 0, "advisory", !!d],
     ["Upgrade check failing", fails, "major", DATA.doctor.length > 0],
   ];
-  document.getElementById("annunciator").replaceChildren(...windows.map(([legend, n, level]) =>
-    h("div", { class: `win ${n ? "lit " + level : ""}` },
+  const box = document.getElementById("annunciator");
+  box.hidden = state.view === "start" && windows.every(([, n]) => n === 0);
+  box.replaceChildren(...windows.map(([legend, n, level, known]) =>
+    h("div", { class: `win ${n ? "lit " + level : ""}`, "aria-label": known ? false : `${legend}: not checked yet` },
       h("span", { class: "lamp", "aria-hidden": "true" }),
       h("span", { class: "legend" }, legend),
       h("span", { class: "count", title: known ? "" : "Not checked yet" }, known ? n : "-"))));
@@ -1393,8 +1401,8 @@ async function init() {
       await refresh();
     } catch (e) {
       document.getElementById("view").replaceChildren(
-        h("h1", {}, "Cannot reach rehub"),
-        empty("The local server did not answer", h("p", {}, e.message), h("p", {}, "Start it again with ", h("code", {}, "rehub web"), ".")));
+        h("h1", {}, e.locked ? "This session ended" : "Cannot reach rehub"),
+        empty(e.locked ? "Open the private link again" : "The local server did not answer", h("p", {}, e.message), h("p", {}, "Start it again with ", h("code", {}, "rehub web"), ".")));
       return;
     }
     await loadSamples();

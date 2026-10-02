@@ -1,10 +1,13 @@
 """Walk the whole interface in a real browser. Not part of the test suite.
 
-Start `rehub web --port 8765` with an empty REHUB_HOME first, then:
-    uv run --no-project --with playwright python scripts/ui_e2e.py
+Start `rehub web --port 8765` with an empty REHUB_HOME first, copy the private link it prints,
+then:
+    REHUB_URL="http://127.0.0.1:8765/?token=..." \
+        uv run --no-project --with playwright python scripts/ui_e2e.py
 Needs Google Chrome and the tool image. Screenshots go to a temporary directory.
 """
 
+import os
 import tempfile
 from pathlib import Path
 
@@ -24,7 +27,7 @@ with sync_playwright() as p:
             errors.append(f"console {m.type}: {m.text}") if m.type in ("error", "warning") else None
         ),
     )
-    page.goto("http://127.0.0.1:8765/")
+    page.goto(os.environ.get("REHUB_URL", "http://127.0.0.1:8765/"))
     page.wait_for_selector(".step")
     print("title:", page.locator("h1").inner_text())
     print("data card:", page.locator(".datapaths").inner_text().replace("\n", " | ")[:140])
