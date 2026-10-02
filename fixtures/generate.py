@@ -156,8 +156,69 @@ def build_s7_download_stop() -> Pcap:
     return pcap
 
 
+def modbus_session(pcap: Pcap, client: str, plc: str, cport: int) -> None:
+    flow = TcpFlow(pcap, client, plc, cport, 502)
+    flow.handshake()
+
+    def adu(tid: int, pdu: bytes) -> bytes:
+        return struct.pack("!HHHB", tid, 0, len(pdu) + 1, 1) + pdu
+
+    regs = bytes(range(20))
+    flow.send(True, adu(1, struct.pack("!BHH", 3, 0, 10)))
+    flow.send(False, adu(1, bytes([3, len(regs)]) + regs))
+    flow.send(True, adu(2, struct.pack("!BHH", 6, 1, 255)))
+    flow.send(False, adu(2, struct.pack("!BHH", 6, 1, 255)))
+    flow.send(True, adu(3, struct.pack("!BHHBHH", 16, 10, 2, 4, 1, 2)))
+    flow.send(False, adu(3, struct.pack("!BHH", 16, 10, 2)))
+    flow.close()
+
+
+def enip_frame(command: int, session: int, data: bytes = b"") -> bytes:
+    return struct.pack("<HHII8sI", command, len(data), session, 0, b"\x00" * 8, 0) + data
+
+
+def enip_session(pcap: Pcap, client: str, plc: str, cport: int) -> None:
+    flow = TcpFlow(pcap, client, plc, cport, 44818)
+    flow.handshake()
+    name = bytes([9]) + b"1756-L83E"
+    attrs = struct.pack("<HHHBBHI", 1, 14, 166, 32, 11, 0x0030, 0x00C0FFEE) + name
+
+    flow.send(True, enip_frame(0x63, 0))
+    sock = struct.pack(">HH4s8s", 2, 44818, ip_bytes(plc), b"\x00" * 8)
+    item = struct.pack("<H", 1) + sock + attrs + b"\x03"
+    listing = struct.pack("<HHH", 1, 0x0C, len(item)) + item
+    flow.send(False, enip_frame(0x63, 0, listing))
+
+    flow.send(True, enip_frame(0x65, 0, struct.pack("<HH", 1, 0)))
+    flow.send(False, enip_frame(0x65, 0x1A2B3C4D, struct.pack("<HH", 1, 0)))
+
+    cip_req = bytes([0x01, 0x02, 0x20, 0x01, 0x24, 0x01])
+    rr = struct.pack("<IHH", 0, 10, 2) + struct.pack("<HH", 0, 0)
+    rr += struct.pack("<HH", 0xB2, len(cip_req)) + cip_req
+    flow.send(True, enip_frame(0x6F, 0x1A2B3C4D, rr))
+    cip_rsp = bytes([0x81, 0, 0, 0]) + attrs
+    rr = struct.pack("<IHH", 0, 0, 2) + struct.pack("<HH", 0, 0)
+    rr += struct.pack("<HH", 0xB2, len(cip_rsp)) + cip_rsp
+    flow.send(False, enip_frame(0x6F, 0x1A2B3C4D, rr))
+    flow.close()
+
+
+def build_modbus_read_write() -> Pcap:
+    pcap = Pcap()
+    modbus_session(pcap, "10.0.0.11", "10.0.0.21", 50000)
+    return pcap
+
+
+def build_enip_identity() -> Pcap:
+    pcap = Pcap()
+    enip_session(pcap, "10.0.0.12", "10.0.0.22", 51000)
+    return pcap
+
+
 FIXTURES = {
     "s7_download_stop": build_s7_download_stop,
+    "modbus_read_write": build_modbus_read_write,
+    "enip_identity": build_enip_identity,
 }
 
 
