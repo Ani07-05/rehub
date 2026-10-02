@@ -56,6 +56,13 @@ CREATE TABLE IF NOT EXISTS baseline_items (
     action TEXT NOT NULL,
     UNIQUE (baseline_id, src, dst, protocol, action)
 );
+CREATE TABLE IF NOT EXISTS yara_rules (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    text TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('validated', 'unvalidated')),
+    created_at TEXT NOT NULL
+);
 CREATE TRIGGER IF NOT EXISTS baselines_no_update BEFORE UPDATE ON baselines
 WHEN OLD.locked = 1 BEGIN SELECT RAISE(ABORT, 'baseline is immutable'); END;
 CREATE TRIGGER IF NOT EXISTS baselines_no_delete BEFORE DELETE ON baselines
@@ -142,3 +149,13 @@ def record_observations(
         [(run_id, *item) for item in items],
     )
     conn.commit()
+
+
+def record_yara_rule(conn: sqlite3.Connection, name: str, text: str, status: str) -> int:
+    cur = conn.execute(
+        "INSERT INTO yara_rules (name, text, status, created_at) VALUES (?, ?, ?, ?)",
+        (name, text, status, now()),
+    )
+    conn.commit()
+    assert cur.lastrowid is not None
+    return cur.lastrowid
