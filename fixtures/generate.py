@@ -156,7 +156,7 @@ def build_s7_download_stop() -> Pcap:
     return pcap
 
 
-def modbus_session(pcap: Pcap, client: str, plc: str, cport: int) -> None:
+def modbus_session(pcap: Pcap, client: str, plc: str, cport: int, writes: bool = True) -> None:
     flow = TcpFlow(pcap, client, plc, cport, 502)
     flow.handshake()
 
@@ -166,10 +166,11 @@ def modbus_session(pcap: Pcap, client: str, plc: str, cport: int) -> None:
     regs = bytes(range(20))
     flow.send(True, adu(1, struct.pack("!BHH", 3, 0, 10)))
     flow.send(False, adu(1, bytes([3, len(regs)]) + regs))
-    flow.send(True, adu(2, struct.pack("!BHH", 6, 1, 255)))
-    flow.send(False, adu(2, struct.pack("!BHH", 6, 1, 255)))
-    flow.send(True, adu(3, struct.pack("!BHHBHH", 16, 10, 2, 4, 1, 2)))
-    flow.send(False, adu(3, struct.pack("!BHH", 16, 10, 2)))
+    if writes:
+        flow.send(True, adu(2, struct.pack("!BHH", 6, 1, 255)))
+        flow.send(False, adu(2, struct.pack("!BHH", 6, 1, 255)))
+        flow.send(True, adu(3, struct.pack("!BHHBHH", 16, 10, 2, 4, 1, 2)))
+        flow.send(False, adu(3, struct.pack("!BHH", 16, 10, 2)))
     flow.close()
 
 
@@ -215,6 +216,25 @@ def build_enip_identity() -> Pcap:
     return pcap
 
 
+def build_plant_normal() -> Pcap:
+    pcap = Pcap()
+    s7_session(pcap, "10.0.0.10", "10.0.0.20", 49152, ())
+    modbus_session(pcap, "10.0.0.11", "10.0.0.21", 50000, writes=False)
+    return pcap
+
+
+def build_plant_changed() -> Pcap:
+    pcap = Pcap()
+    s7_session(pcap, "10.0.0.10", "10.0.0.20", 49152, ("download", "stop"))
+    s7_session(pcap, "10.0.0.99", "10.0.0.20", 49300, ())
+    return pcap
+
+
+SCENARIOS = {
+    "plant_normal": build_plant_normal,
+    "plant_changed": build_plant_changed,
+}
+
 FIXTURES = {
     "s7_download_stop": build_s7_download_stop,
     "modbus_read_write": build_modbus_read_write,
@@ -225,8 +245,12 @@ FIXTURES = {
 def main(out_dir: Path) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     for name, build in FIXTURES.items():
-        (out_dir / f"{name}.pcap").write_bytes(build().to_bytes())
+        (out_dir / "pcaps").mkdir(exist_ok=True)
+        (out_dir / "pcaps" / f"{name}.pcap").write_bytes(build().to_bytes())
+    for name, build in SCENARIOS.items():
+        (out_dir / "scenarios").mkdir(exist_ok=True)
+        (out_dir / "scenarios" / f"{name}.pcap").write_bytes(build().to_bytes())
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).parent / "pcaps")
+    main(Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).parent)
