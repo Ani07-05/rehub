@@ -60,4 +60,6 @@ def test_repo_golden_exists_for_every_fixture() -> None:
     for pcap in (repo / "pcaps").glob("*.pcap"):
         for tool in ("zeek", "suricata", "tshark"):
             assert golden_path(repo, tool, pcap.stem).exists()
+    for sample in (repo / "yara" / "samples").iterdir():
+        assert golden_path(repo, "yara", sample.stem).exists()
     shutil.which("true")

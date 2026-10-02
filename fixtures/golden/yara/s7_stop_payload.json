@@ -1,0 +1,9 @@
+{
+  "logs": {
+    "matches": [
+      {
+        "rule": "REHUB_S7_PLC_Stop_Request"
+      }
+    ]
+  }
+}

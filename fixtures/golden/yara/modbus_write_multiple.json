@@ -1,0 +1,9 @@
+{
+  "logs": {
+    "matches": [
+      {
+        "rule": "REHUB_Modbus_Write_Multiple_Registers"
+      }
+    ]
+  }
+}

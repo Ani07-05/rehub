@@ -1,0 +1,9 @@
+{
+  "logs": {
+    "matches": [
+      {
+        "rule": "REHUB_Triton_Filenames"
+      }
+    ]
+  }
+}

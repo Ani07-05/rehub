@@ -9,13 +9,14 @@ from rehub.analyze import analyze as run_analysis
 from rehub.diff import summarize
 from rehub.doctor import FIXTURES_DIR, run_doctor
 from rehub.runner import DEFAULT_IMAGE, RunnerError, default_runner
-from rehub.tools import Tool, suricata, tshark, zeek
+from rehub.tools import Tool, suricata, tshark, yara, zeek
 
 app = typer.Typer(no_args_is_help=True, add_completion=False, help="Safe OT analysis toolkit.")
 baseline_app = typer.Typer(no_args_is_help=True, help="Immutable baselines of normal traffic.")
 app.add_typer(baseline_app, name="baseline")
 
-TOOLS: list[Tool] = [zeek, suricata, tshark]
+PCAP_TOOLS: list[Tool] = [zeek, suricata, tshark]
+TOOLS: list[Tool] = [*PCAP_TOOLS, yara]
 
 
 @app.command()
@@ -92,7 +93,7 @@ def analyze(
     """Run every tool over a pcap (read only) and store the results."""
     conn = db.connect()
     try:
-        result = run_analysis(pcap, TOOLS, default_runner(image), conn, db.home())
+        result = run_analysis(pcap, PCAP_TOOLS, default_runner(image), conn, db.home())
     except RunnerError as exc:
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(2) from exc

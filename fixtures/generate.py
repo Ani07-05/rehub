@@ -235,6 +235,19 @@ SCENARIOS = {
     "plant_changed": build_plant_changed,
 }
 
+
+def yara_samples() -> dict[str, bytes]:
+    stop = s7_job(1, b"\x29\x00\x00\x00\x00\x00\x09P_PROGRAM")
+    pdu = struct.pack("!BHHBHH", 16, 10, 2, 4, 1, 2)
+    modbus_write = struct.pack("!HHHB", 3, 0, len(pdu) + 1, 1) + pdu
+    return {
+        "modbus_write_multiple.bin": modbus_write,
+        "s7_stop_payload.bin": stop,
+        "triton_strings.txt": b"dropper stage list: inject.bin imain.bin\n",
+        "benign.txt": b"Weekly maintenance notes for line 4. No changes to controller logic.\n",
+    }
+
+
 FIXTURES = {
     "s7_download_stop": build_s7_download_stop,
     "modbus_read_write": build_modbus_read_write,
@@ -247,6 +260,9 @@ def main(out_dir: Path) -> None:
     for name, build in FIXTURES.items():
         (out_dir / "pcaps").mkdir(exist_ok=True)
         (out_dir / "pcaps" / f"{name}.pcap").write_bytes(build().to_bytes())
+    (out_dir / "yara" / "samples").mkdir(parents=True, exist_ok=True)
+    for name, data in yara_samples().items():
+        (out_dir / "yara" / "samples" / name).write_bytes(data)
     for name, build in SCENARIOS.items():
         (out_dir / "scenarios").mkdir(exist_ok=True)
         (out_dir / "scenarios" / f"{name}.pcap").write_bytes(build().to_bytes())

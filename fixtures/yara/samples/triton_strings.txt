@@ -1,0 +1,1 @@
+dropper stage list: inject.bin imain.bin
