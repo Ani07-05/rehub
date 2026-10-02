@@ -118,6 +118,23 @@ timers), new and removed lines, and which findings are new. Whitespace and line 
 ignored. Exit code 1 if there is a high severity finding or any finding new since the approved
 version. Try it with `fixtures/plc/boiler_approved.st` and `fixtures/plc/boiler_updated.st`.
 
+### Going deeper with an external tool
+
+rehub's check is a short list of patterns. A deeper analysis exists in research:
+[AttkFinder](https://gitlab.com/jhcastel/attkfinder) builds data-flow and control-flow graphs of IEC
+61131-3 programs (XML or Structured Text) and uses symbolic execution to look for data-oriented
+attack vectors. rehub does not bundle or run it, for these reasons found by reading its repository:
+
+- No license is stated, so it cannot be redistributed with rehub.
+- It needs a running Neo4j database, `py2neo`, `neomodel` and `z3`, and a parameter file for its
+  attack analysis.
+- Its output is debug printing and an attack tree, not a stable format, and its README is out of
+  date (it names `xml_parser.py`, the entry point is `plc_parser.py`).
+- It looks like a research prototype (last commit April 2023) and does not read Rockwell L5X.
+
+If you want to try it, install it yourself and run it on the same `.st` file you give rehub. Treat
+its result as a lead for a person to review, the same as rehub's own findings.
+
 ## web
 
 ```sh

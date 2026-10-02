@@ -1109,7 +1109,7 @@ function plcResult(r) {
 
 function viewPlc() {
   const parts = [h("h1", {}, "PLC code")];
-  parts.push(h("p", { class: "lede" }, "Upload the source of a PLC program: Structured Text or SCL as a text file, or a Rockwell L5X export. rehub flags patterns a person should look at, and shows what changed since the version you approved. It is a review, not a vulnerability scan: it cannot test the controller's firmware."));
+  parts.push(h("p", { class: "lede" }, "Upload the source of a PLC program: Structured Text or SCL as a text file, or a Rockwell L5X export. rehub flags patterns a person should look at, and shows what changed since the version you approved. It is a review, not a vulnerability scan: it cannot test the controller's firmware. For a deeper data-flow analysis, research tools such as AttkFinder exist; see the usage notes."));
   if (LIVE) {
     parts.push(h("div", { class: "panel card" },
       h("h3", {}, "Check a program"),
