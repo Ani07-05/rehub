@@ -40,6 +40,7 @@ out what moving to a newer tshark changes.
   and never writes.
 - `doctor` replays fixtures through every tool and compares with golden files.
 - `yara` scans, explains and drafts rules. A model is optional and off by default.
+- `plc` reviews PLC source for risky patterns and compares it with an approved version.
 - `web` serves a local interface over all of the above. `report` writes it as a static file.
 
 ## Doctor normalization
@@ -62,6 +63,8 @@ are compared separately and reported, not written into golden files.
 
 ## Not verified
 
+- That the PLC code patterns catch what matters in your plant. The list is short and heuristic.
+  It is a review aid, not a vulnerability scanner, and it does not look at firmware.
 - That no other OT tool does version compatibility checking. Only a few searches were made.
 - That ICSNPP works unchanged on Zeek 9.0 for real traffic.
 - Licensing of public ICS pcaps. None are bundled. Fixtures are generated.

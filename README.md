@@ -37,9 +37,21 @@ not replace any of them.
    candidate image before you switch sensors to it.
 3. **An interface.** `rehub web` serves a local page: drop in a capture, see baseline changes
    drawn as ladder rungs, run doctor, scan with a rule. `rehub report` writes the same view as
-   one offline HTML file.
+   one offline HTML file. A built-in help assistant answers common questions with no model.
 4. **One memory.** Runs, tool versions and baselines live in one local SQLite file, so
    "is this new?" has an answer. Baselines are immutable.
+
+## Where your data is
+
+One SQLite file at `~/.rehub/rehub.db` (or `$REHUB_HOME`), with recordings you loaded in
+`~/.rehub/uploads`, tool output in `~/.rehub/runs`, and settings in `~/.rehub/config.toml`. Delete
+the folder to remove everything. Nothing leaves your computer unless you choose a hosted model.
+
+## PLC program check
+
+`rehub plc check program.st` reviews Structured Text, SCL or Rockwell L5X source for risky patterns
+and compares it with an approved version. It is a review, not a vulnerability scan: there is no
+standard database of PLC logic vulnerabilities and rehub does not test firmware.
 
 ## Quick start
 

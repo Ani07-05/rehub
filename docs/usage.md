@@ -85,6 +85,39 @@ Passive tcpdump for a fixed time. `--iface` is required and must be one named in
 `any`). `--seconds` is 1 to 86400. The output file must not exist. It prints that rehub only
 listens. Needs tcpdump and capture privileges, see [install.md](install.md).
 
+## plc
+
+```sh
+rehub plc approve FILE --name NAME
+rehub plc check FILE [--against NAME]
+rehub plc list
+```
+
+A review of PLC program source: Structured Text or SCL as a text file, or a Rockwell L5X export.
+It is a heuristic review of patterns a person should look at. It is **not** a vulnerability
+scan and cannot test controller firmware. There is no standard database of vulnerabilities in
+PLC logic, so rehub does not claim to match CVEs.
+
+`check` flags, with the line, a plain reason and what to check:
+
+| Pattern | Severity |
+|---|---|
+| A password or key written into the code | high |
+| An instruction that stops the controller (`STP` and similar) | high |
+| A force, override or bypass switched on | high |
+| A safety-related signal set off (by name) | medium |
+| The program opens network connections itself (`TCON`, `TSEND`, `PUT`, `GET`, Modbus blocks) | medium |
+| A network address written into the code | medium |
+| `WHILE TRUE` loops | medium |
+| A test, debug or simulation switch left on | medium |
+
+`approve` saves a version under a name. Approved versions are kept, versioned, and the database
+rejects any update or delete. When you `check` a file, rehub compares it with the latest approved
+version of the same name (or `--against NAME`) and shows numbers that changed (setpoints, limits,
+timers), new and removed lines, and which findings are new. Whitespace and line shifts are
+ignored. Exit code 1 if there is a high severity finding or any finding new since the approved
+version. Try it with `fixtures/plc/boiler_approved.st` and `fixtures/plc/boiler_updated.st`.
+
 ## web
 
 ```sh
@@ -100,16 +133,23 @@ websites).
   tools, analyze a capture, freeze a baseline, compare a new capture, run doctor before a tool
   upgrade, and optionally draft a rule. The next step is marked, steps that need an earlier one
   are locked, and every other page shows what to do next.
-- **Traffic:** drop a `.pcap` or `.pcapng`. It is analyzed with Zeek, Suricata and tshark (tools
+- **Conversations:** drop a `.pcap` or `.pcapng`. It is analyzed with Zeek, Suricata and tshark (tools
   run with no network), stored, and drawn as host pair rungs. Captures up to 256 MB.
-- **Changes:** pick a baseline and a capture. Red rungs are new host pairs, amber rungs are new
-  actions, dashed rungs are pairs not seen. Save the capture as a new baseline from here. An
-  existing baseline can never be changed.
-- **Doctor:** run doctor against the default image or a candidate image, and check tool versions.
-- **Rules:** draft a rule with a model (pick local Ollama or hosted, add sample files it must
+- **What changed:** pick a normal snapshot (a baseline) and a recording. It lists the changes in
+  plain sentences, then draws every conversation: red is a new device pair, amber a new action,
+  dashed a pair that went quiet. You can accept a recording as a new snapshot from here. An
+  existing snapshot can never be changed.
+- **Upgrade check:** run doctor against the default image or a candidate image, and check tool versions.
+- **Detection rules:** draft a rule with a model (pick local Ollama or hosted, add sample files it must
   match and clean files it must not), or scan a sample with a pasted rule. For a hosted model the
   page first shows the exact text that would be sent and sends nothing until you press the send
   button. Sample files stay on this computer. Drafted rules show Validated or Unvalidated.
+- **PLC code:** upload a program, see findings with plain reasons, approve a version, and compare
+  later uploads with it. Same checks as `rehub plc`.
+- **Ask for help** (button at the bottom right): answers common questions from a built-in manual,
+  with no model. If the manual has no answer you can opt into a local or hosted model. A hosted
+  model gets only your question and the manual after you confirm. Recordings, results and PLC
+  code are never part of a question.
 - **Traffic** also offers the bundled sample captures with one click.
 
 The page needs nothing from the internet. Stop the server with Ctrl-C.
