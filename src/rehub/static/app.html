@@ -90,7 +90,7 @@ button, select { font: inherit; color: inherit; }
 .rail button[aria-current="page"] { color: var(--ink); font-weight: 700; background: var(--surface); }
 .rail button[aria-current="page"]::before { background: var(--ink); border-color: var(--ink); }
 .rail button:hover { color: var(--ink); }
-.rail .meta { margin-top: auto; padding-right: 20px; font-size: 12px; color: var(--ink-2); }
+.rail .meta { margin-top: auto; padding-right: 20px; font-size: 12px; color: var(--ink-2); overflow-wrap: anywhere; }
 
 main { padding: 24px 32px 48px 24px; min-width: 0; }
 
@@ -292,11 +292,79 @@ details.card[open] summary { margin-bottom: 12px; }
 .step-body { margin-top: 12px; }
 .nextline { margin: 0 0 14px; padding: 8px 14px; background: var(--surface); border-left: 4px solid var(--advisory); }
 .link { background: none; border: 0; padding: 0 0 0 6px; color: var(--advisory); font: 600 15px/1 var(--head); cursor: pointer; text-decoration: underline; }
+
+/* plain-language findings */
+.changes { list-style: none; margin: 0 0 18px; padding: 0; }
+.changes li { position: relative; padding: 11px 16px 11px 40px; background: var(--surface); border: 1px solid var(--line); border-bottom: 0; }
+.changes li:last-child { border-bottom: 1px solid var(--line); }
+.changes li::before { content: ""; position: absolute; left: 16px; top: 17px; width: 11px; height: 11px; background: currentColor; }
+.changes .high { color: var(--major); }
+.changes .medium { color: var(--minor); }
+.changes .medium::before { transform: rotate(45deg); }
+.changes .low { color: var(--advisory); }
+.changes .low::before { background: none; border: 2px dashed currentColor; }
+.changes .said { color: var(--ink); font: 600 16px/1.35 var(--head); }
+.changes .hint { display: block; color: var(--ink-2); font: 14px/1.4 var(--body); margin-top: 2px; }
+
+/* plc review */
+.sev { display: inline-block; font: 700 13px/1 var(--head); padding: 3px 8px; border: 2px solid currentColor; }
+.sev.high { color: var(--major); }
+.sev.medium { color: var(--minor); }
+.sev.low { color: var(--advisory); }
+.finding { padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.finding:last-child { border-bottom: 0; }
+.finding h4 { margin: 6px 0 4px; font: 700 17px/1.25 var(--head); }
+.finding code { display: block; margin: 6px 0; padding: 6px 10px; overflow-x: auto; white-space: pre; }
+.finding p { margin: 4px 0 0; max-width: 72ch; }
+.finding .lbl { font-weight: 700; }
+.diffline { font: 13px/1.5 var(--mono); padding: 2px 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.diffline.add { background: color-mix(in srgb, var(--advisory) 14%, transparent); }
+.diffline.del { background: color-mix(in srgb, var(--rail) 18%, transparent); text-decoration: line-through; }
+.diffline.val { background: color-mix(in srgb, var(--minor) 16%, transparent); }
+.kv { display: grid; grid-template-columns: minmax(10ch, 16ch) 1fr; gap: 4px 14px; font: 13px/1.5 var(--mono); }
+.kv dt { color: var(--ink-2); }
+.kv dd { margin: 0; overflow-wrap: anywhere; }
+
+/* help assistant */
+.helpbtn {
+  position: fixed; right: 20px; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 20;
+  padding: 11px 18px; background: var(--ink); color: var(--panel); border: 0; cursor: pointer; font: 700 16px/1 var(--head);
+}
+.help {
+  position: fixed; right: 20px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); z-index: 20;
+  width: min(420px, calc(100vw - 32px)); max-height: min(640px, calc(100vh - 110px)); display: flex; flex-direction: column;
+  background: var(--surface); border: 2px solid var(--ink);
+}
+.help[hidden] { display: none; }
+.help header { padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.help header strong { font: 700 18px/1.2 var(--head); }
+.help header span { display: block; color: var(--ink-2); font-size: 13px; }
+.help .log { padding: 12px 16px; overflow-y: auto; flex: 1; }
+.help .q { font: 600 15px/1.3 var(--head); margin: 12px 0 4px; }
+.help .q:first-child { margin-top: 0; }
+.help .a { margin: 0 0 6px; white-space: pre-wrap; }
+.help .src { color: var(--ink-2); font-size: 12px; }
+.help .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.chip { padding: 5px 10px; background: var(--surface-2); border: 1px solid var(--rail); cursor: pointer; font: 500 14px/1.2 var(--body); }
+.chip:hover { border-color: var(--ink); }
+.help form { display: flex; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--line); }
+.help form input { flex: 1; min-width: 0; }
+.help details { padding: 0 16px 10px; font-size: 13px; }
+.help details summary { cursor: pointer; color: var(--ink-2); }
+.help .boxed { margin-top: 8px; padding: 10px; border: 1px solid var(--line); background: var(--surface-2); }
+.help pre { max-height: 140px; overflow: auto; }
+.datapaths { display: grid; gap: 4px; margin: 8px 0 0; font: 13px/1.5 var(--mono); }
+.datapaths span { color: var(--ink-2); font-family: var(--body); }
+details.explain { margin: 10px 0 0; }
+details.explain summary { cursor: pointer; font: 600 15px/1.2 var(--head); }
+details.explain p { margin: 8px 0 0; max-width: 66ch; color: var(--ink-2); }
+@media (max-width: 860px) { .changes li { padding-left: 36px; } }
 </style>
+
 <div class="app">
   <aside class="rail">
-    <h2 class="brand">rehub<small>Passive OT traffic review</small></h2>
-    <nav id="nav" aria-label="Views"></nav>
+    <h2 class="brand">rehub<small>Did anything change on your plant network?</small></h2>
+    <nav id="nav" aria-label="Pages"></nav>
     <p class="meta" id="meta"></p>
   </aside>
   <main>
@@ -305,6 +373,8 @@ details.card[open] summary { margin-bottom: 12px; }
     <div id="view"></div>
   </main>
 </div>
+<button type="button" class="helpbtn" id="helpbtn" hidden aria-controls="help" aria-expanded="false">Ask for help</button>
+<aside class="help" id="help" hidden aria-label="Help assistant"></aside>
 
 <script>
 const EMBEDDED = /*__REHUB_DATA__*/null;
@@ -313,10 +383,11 @@ const LIVE = EMBEDDED === null;
 
 const VIEWS = [
   { id: "start", label: "Start" },
-  { id: "changes", label: "Changes" },
-  { id: "traffic", label: "Traffic" },
-  { id: "doctor", label: "Doctor" },
-  { id: "rules", label: "Rules" },
+  { id: "changes", label: "What changed" },
+  { id: "traffic", label: "Conversations" },
+  { id: "plc", label: "PLC code" },
+  { id: "doctor", label: "Upgrade check" },
+  { id: "rules", label: "Detection rules" },
 ];
 const state = {
   view: "start", baseline: null, run: null, trafficRun: null,
@@ -326,6 +397,8 @@ const state = {
   samples: [],
   draftDesc: "", draftProvider: "ollama", draftModel: "", draftPositives: [], draftBenign: [],
   draftResult: null, draftConfirm: null,
+  plc: { file: null, name: "", text: "", result: null, approveName: "" },
+  help: { open: false, question: "", log: [], confirm: null, error: null, busy: false, provider: "ollama", model: "" },
 };
 
 function h(tag, attrs, ...kids) {
@@ -336,7 +409,7 @@ function h(tag, attrs, ...kids) {
     else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
     else if (v !== false && v != null) el.setAttribute(k, v === true ? "" : v);
   }
-  for (const kid of kids.flat()) {
+  for (const kid of kids.flat(Infinity)) {
     if (kid == null || kid === false) continue;
     el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
   }
@@ -346,6 +419,7 @@ function h(tag, attrs, ...kids) {
 const key = (i) => i.join("\u0000");
 const pairKey = (i) => i[0] + "\u0000" + i[1];
 const when = (iso) => (iso ? iso.replace("T", " ").replace(/\+00:00$/, " UTC") : "");
+const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 
 /* ---- talking to the local server ---- */
 async function api(path, options) {
@@ -356,6 +430,7 @@ async function api(path, options) {
   if (!res.ok) throw new Error(body && body.error ? body.error : `The server answered ${res.status}.`);
   return body;
 }
+const postJson = (path, payload) => api(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
 
 function pickDefaults() {
   const runs = observedRuns();
@@ -388,11 +463,11 @@ async function finishAnalysis(result, label) {
   await refresh();
   if (result.zeek_run_id != null) { state.run = result.zeek_run_id; state.trafficRun = result.zeek_run_id; }
   if (state.view !== "start") state.view = "traffic";
-  state.notice = `Analyzed ${label}.`;
+  state.notice = `Loaded ${label}.`;
 }
 
 function analyzeFile(file) {
-  return act(`Analyzing ${file.name} with Zeek, Suricata and tshark. This can take a minute.`, async () => {
+  return act(`Reading ${file.name}. This can take a minute. Nothing is sent to any network.`, async () => {
     const result = await api("/api/analyze", {
       method: "POST", body: file,
       headers: { "Content-Type": "application/octet-stream", "X-Filename": encodeURIComponent(file.name) },
@@ -402,40 +477,35 @@ function analyzeFile(file) {
 }
 
 function analyzeSample(name) {
-  return act(`Analyzing the ${name} sample with Zeek, Suricata and tshark.`, async () => {
-    const result = await api("/api/analyze-sample", {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }),
-    });
-    await finishAnalysis(result, `${name}.pcap`);
+  return act(`Reading the ${name} sample recording.`, async () => {
+    await finishAnalysis(await postJson("/api/analyze-sample", { name }), `${name}.pcap`);
   });
 }
 
 function saveBaseline(run) {
   const name = state.baselineName.trim();
-  if (!name) { state.error = "Name the baseline first."; render(); return Promise.resolve(); }
-  return act(`Saving baseline ${name}.`, async () => {
-    await api("/api/baselines", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, run }) });
+  if (!name) { state.error = "Give the snapshot a name first, for example plant-normal."; render(); return Promise.resolve(); }
+  return act(`Saving ${name}.`, async () => {
+    await postJson("/api/baselines", { name, run });
     await refresh();
     state.baseline = name; state.baselineName = ""; state.run = run;
     if (state.view !== "start") state.view = "changes";
-    state.notice = `Saved baseline ${name}. It can no longer be changed.`;
+    state.notice = `Saved your normal snapshot ${name}. It can no longer be changed.`;
   });
 }
 
 function runDoctor() {
   const image = state.doctorImage.trim();
-  return act(`Running doctor${image ? " on " + image : ""}. This takes about half a minute.`, async () => {
-    const result = await api("/api/doctor", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image }) });
+  return act(`Testing ${image || "the tools"}. This takes about half a minute.`, async () => {
+    const result = await postJson("/api/doctor", { image });
     await refresh();
     if (state.view !== "start") state.view = "doctor";
-    state.notice = result.passed ? "Every tool matches its golden output." : "Doctor found differences. Details below.";
+    state.notice = result.passed ? "Every tool still behaves as expected." : "Some tools behave differently. Details below.";
   });
 }
 
 function checkTools() {
-  return act("Checking tool versions in the image.", async () => {
-    state.toolCheck = await api("/api/tools");
-  });
+  return act("Checking the tool versions.", async () => { state.toolCheck = await api("/api/tools"); });
 }
 
 function toBase64(buffer) {
@@ -447,17 +517,13 @@ function toBase64(buffer) {
 
 function scanYara() {
   if (!state.rules.trim() || !state.ruleSample) {
-    state.error = "Paste a rule and choose a sample file to scan.";
+    state.error = "Paste a rule and choose a file to scan.";
     render();
     return Promise.resolve();
   }
   const file = state.ruleSample;
   return act(`Scanning ${file.name}.`, async () => {
-    const data = toBase64(await file.arrayBuffer());
-    const result = await api("/api/yara/scan", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rules: state.rules, filename: file.name, data }),
-    });
+    const result = await postJson("/api/yara/scan", { rules: state.rules, filename: file.name, data: toBase64(await file.arrayBuffer()) });
     state.yara = { file: file.name, matches: result.matches };
   });
 }
@@ -468,12 +534,11 @@ async function filesPayload(files) {
 
 function draftRule(confirmed) {
   if (!state.draftDesc.trim()) { state.error = "Describe what the rule should detect."; render(); return Promise.resolve(); }
-  return act("Drafting a rule, then compiling it and testing it against your samples.", async () => {
-    const body = {
+  return act("Writing a rule, then compiling it and testing it on your files.", async () => {
+    const result = await postJson("/api/yara/draft", {
       description: state.draftDesc, provider: state.draftProvider, model: state.draftModel.trim(), yes: confirmed === true,
       positives: await filesPayload(state.draftPositives), benign: await filesPayload(state.draftBenign),
-    };
-    const result = await api("/api/yara/draft", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    });
     if (result.needs_confirmation) { state.draftConfirm = result; state.draftResult = null; return; }
     state.draftConfirm = null;
     state.draftResult = result;
@@ -481,10 +546,31 @@ function draftRule(confirmed) {
   });
 }
 
+function checkPlc() {
+  const f = state.plc.file;
+  if (!f) { state.error = "Choose a PLC program file first."; render(); return Promise.resolve(); }
+  if (f.size > 20 * 1024 * 1024) { state.error = "That file is larger than 20 MB."; render(); return Promise.resolve(); }
+  return act(`Reviewing ${f.name}.`, async () => {
+    state.plc.text = await f.text();
+    state.plc.result = await postJson("/api/plc/check", { filename: f.name, text: state.plc.text, against: state.plc.name.trim() || undefined });
+    state.plc.approveName = state.plc.approveName || state.plc.result.name;
+  });
+}
+
+function approvePlc() {
+  const name = (state.plc.approveName || "").trim();
+  if (!name || !state.plc.text) { state.error = "Review a program first, and name it."; render(); return Promise.resolve(); }
+  return act(`Approving ${name}.`, async () => {
+    await postJson("/api/plc/approve", { name, filename: state.plc.file ? state.plc.file.name : name, text: state.plc.text });
+    await refresh();
+    state.notice = `Approved ${name}. Later uploads named ${name} are compared with this version, and it can no longer be changed.`;
+  });
+}
+
 /* ---- shared pieces ---- */
 function runLabel(run) {
   const n = (DATA.observations[String(run.id)] || []).length;
-  return `run ${run.id}, ${when(run.started_at)}, ${n} flows, ${run.input_sha256.slice(0, 8)}`;
+  return `Recording ${run.id}, ${when(run.started_at)}, ${plural(n, "conversation")}, ${run.input_sha256.slice(0, 8)}`;
 }
 function observedRuns() {
   return DATA.runs.filter((r) => String(r.id) in DATA.observations);
@@ -498,11 +584,11 @@ function rungsFor(items, stateOf) {
 }
 
 const STATE_TEXT = {
-  "new-pair": "New host pair",
+  "new-pair": "New device talking",
   "new-action": "New action",
-  "missing-pair": "Pair not seen",
+  "missing-pair": "Went quiet",
   "missing-action": "Not seen",
-  unchanged: "Same as baseline",
+  unchanged: "Same as normal",
   seen: "Seen",
 };
 
@@ -540,23 +626,65 @@ function dropZone() {
     ondragover: (e) => { e.preventDefault(); zone.classList.add("over"); },
     ondragleave: () => zone.classList.remove("over"),
     ondrop: (e) => { e.preventDefault(); zone.classList.remove("over"); const f = e.dataTransfer.files[0]; if (f) analyzeFile(f); } },
-    h("strong", {}, "Drop a capture here, or choose a file"),
-    h("span", {}, "A .pcap or .pcapng. It is read only: the tools run with no network and nothing is sent."),
+    h("strong", {}, "Drop a recording here, or choose a file"),
+    h("span", {}, "A .pcap or .pcapng file. It is only read. Nothing is sent to your network."),
     input);
   return zone;
 }
 
+function sampleButtons() {
+  if (!state.samples.length) return null;
+  return h("div", { class: "row", style: "margin-top:10px; align-items:center" },
+    h("span", {}, "Just exploring? Try a sample recording:"),
+    ...state.samples.map((n) => btn(n.replace(/_/g, " "), () => analyzeSample(n), false)));
+}
+
+function pcapHelp() {
+  return h("details", { class: "explain" },
+    h("summary", {}, "What is a recording, and where do I get one?"),
+    h("p", {}, "A recording (a .pcap file) is a copy of the messages that crossed your network during some time, like a voice recorder for the network. Ask whoever manages your network switch to mirror a port to a laptop, then record for 30 to 60 minutes with Wireshark, or with the rehub capture command. Recording only listens. Never run a scanner on a live control network."));
+}
+
 function baselineForm(run) {
   return h("div", { class: "row" },
-    h("label", {}, "Baseline name",
+    h("label", {}, "Name for this normal snapshot",
       h("input", { type: "text", placeholder: "plant-normal", value: state.baselineName,
         oninput: (e) => { state.baselineName = e.target.value; } })),
-    btn("Save baseline", () => saveBaseline(run), true));
+    btn("Save as normal", () => saveBaseline(run), true));
 }
 
 function diffFor() {
   if (!state.baseline || state.run == null) return null;
   return DATA.diffs[`${state.baseline}|${state.run}`] || null;
+}
+
+/* ---- plain-language description of a change ---- */
+const ACTION_SAY = {
+  "program download": (s, d) => [`${s} sent a new program to ${d}.`, "A program download replaces the logic running on the controller."],
+  "program upload": (s, d) => [`${s} copied the program from ${d}.`, "Someone read the controller's logic."],
+  stop: (s, d) => [`${s} told ${d} to stop.`, "A stopped controller halts the process it runs."],
+  "mode change": (s, d) => [`${s} changed the run mode of ${d}.`, "Switching modes can pause or restart the process."],
+  "parameter write": (s, d) => [`${s} wrote new values to ${d}.`, "Check that the new values are intended."],
+};
+
+function describeChanges(d) {
+  const out = [];
+  for (const [src, dst] of d.new_pairs) {
+    out.push({ level: "high", say: `${src} started talking to ${dst} for the first time.`, hint: "This pair is not in your normal snapshot. Check that it is a device you know." });
+  }
+  for (const [src, dst, proto, action] of d.new_actions) {
+    const make = ACTION_SAY[action];
+    if (make) {
+      const [say, hint] = make(src, dst);
+      out.push({ level: action === "program upload" ? "medium" : "high", say, hint });
+    } else {
+      out.push({ level: "medium", say: `${src} started using ${proto} with ${dst}.`, hint: "These two already talked, but not this way before." });
+    }
+  }
+  for (const [src, dst] of d.missing_pairs) {
+    out.push({ level: "low", say: `${src} no longer talks to ${dst}.`, hint: "A device that used to talk went quiet. It may be off, moved or blocked." });
+  }
+  return out;
 }
 
 /* ---- the workflow ---- */
@@ -569,37 +697,44 @@ function steps() {
   const runs = observedRuns();
   const hasBaseline = DATA.baselines.length > 0;
   const failing = DATA.doctor.filter((r) => r.status !== "PASS").length;
+  const last = DATA.baselines[DATA.baselines.length - 1];
   return [
-    { id: "tools", view: "start", title: "Check the tools",
-      why: "Confirms the tool image has the exact versions rehub was tested with.",
+    { id: "tools", title: "Make sure your tools are ready",
+      why: "rehub uses Zeek, Suricata, tshark and YARA. This confirms they are the exact versions it was tested with.",
       done: toolsChecked(), cli: "rehub tools",
-      summary: state.toolCheck ? (state.toolCheck.tools.every((t) => t.ok) ? "Every tool matches its pinned version." : "Some tools differ from their pinned version.") : (DATA.tools.length ? `${DATA.tools.length} tool versions recorded by earlier runs.` : "") },
-    { id: "capture", view: "traffic", title: "Analyze a capture",
-      why: "Reads a pcap with Zeek, Suricata and tshark. Nothing is sent to any network.",
-      done: runs.length > 0, cli: "rehub analyze capture.pcap",
-      summary: runs.length ? `${runs.length} capture${runs.length === 1 ? "" : "s"} analyzed.` : "" },
-    { id: "baseline", view: "changes", title: "Freeze normal as a baseline",
-      why: "Saves which host pairs and actions you expect. A saved baseline can never be changed.",
-      done: hasBaseline, locked: runs.length === 0 ? "Analyze a capture first." : null, cli: "rehub baseline save plant-normal --run 1",
-      summary: hasBaseline ? `Baseline ${DATA.baselines[DATA.baselines.length - 1].name} has ${DATA.baselines[DATA.baselines.length - 1].count} items.` : "" },
-    { id: "compare", view: "changes", title: "Compare a new capture",
-      why: "Analyze a later capture and see what is new or missing against the baseline.",
-      done: hasBaseline && runs.length >= 2, locked: hasBaseline ? null : "Save a baseline first.", cli: "rehub baseline diff plant-normal --run 4",
-      summary: hasBaseline && runs.length >= 2 ? "A later capture is ready to compare." : "" },
-    { id: "doctor", view: "doctor", title: "Check your tools before an upgrade",
-      why: "Replays test captures through every tool and names what a new version changes.",
+      summary: state.toolCheck ? (state.toolCheck.tools.every((t) => t.ok) ? "All tools are the expected versions." : "Some tools are not the expected version.") : (DATA.tools.length ? "Tool versions were recorded by earlier runs." : "") },
+    { id: "capture", title: "Load a recording of normal traffic",
+      why: "Pick a recording taken on a normal day. rehub reads it and lists who talked to whom.",
+      done: runs.length > 0, cli: "rehub analyze normal.pcap",
+      summary: runs.length ? `${plural(runs.length, "recording")} loaded.` : "" },
+    { id: "baseline", title: "Save it as your normal snapshot",
+      why: "This remembers which devices talk and which actions are expected. A saved snapshot can never be changed.",
+      done: hasBaseline, locked: runs.length === 0 ? "Load a recording first." : null, cli: "rehub baseline save plant-normal --run 1",
+      summary: hasBaseline ? `Snapshot ${last.name} holds ${plural(last.count, "conversation")}.` : "" },
+    { id: "compare", title: "Load a newer recording and see what changed",
+      why: "Record again later, or after something odd, and load it. rehub shows new devices, risky commands and devices that went quiet.",
+      done: hasBaseline && runs.length >= 2, locked: hasBaseline ? null : "Save a normal snapshot first.", cli: "rehub baseline diff plant-normal --run 4",
+      summary: hasBaseline && runs.length >= 2 ? "A newer recording is ready to compare." : "" },
+    { id: "plc", title: "Check an updated PLC program",
+      why: "Upload the program source. rehub flags risky patterns and shows what changed from the version you approved. It is a review, not a vulnerability scan.",
+      done: DATA.plc_programs.length > 0, cli: "rehub plc check program.st",
+      summary: DATA.plc_programs.length ? `${plural(DATA.plc_programs.length, "approved version")} saved.` : "" },
+    { id: "doctor", title: "Test a tool upgrade before you roll it out",
+      why: "Before updating your monitoring tools, replay test recordings through the new version. rehub names anything it changes.",
       done: DATA.doctor.length > 0, cli: "rehub doctor",
-      summary: DATA.doctor.length ? (failing ? `${failing} fixture${failing === 1 ? "" : "s"} differ from the golden output.` : "Every tool matches its golden output.") : "" },
-    { id: "rules", view: "rules", title: "Write a detection rule", optional: true,
-      why: "Optional. Draft a YARA rule with a model, then have it compiled and tested on your samples.",
+      summary: DATA.doctor.length ? (failing ? `${plural(failing, "test")} came out different from expected.` : "Every tool behaves as expected.") : "" },
+    { id: "rules", title: "Write a detection rule", optional: true,
+      why: "Optional. Describe something to look for, let a model draft a rule, and have it tested on your files.",
       done: DATA.rules.length > 0, cli: 'rehub yara draft "what to detect" --positive sample.bin',
-      summary: DATA.rules.length ? `${DATA.rules.length} rule${DATA.rules.length === 1 ? "" : "s"} stored.` : "" },
+      summary: DATA.rules.length ? `${plural(DATA.rules.length, "rule")} saved.` : "" },
   ];
 }
 
 function nextStep() {
   return steps().find((st) => !st.done && !st.optional && !st.locked) || null;
 }
+
+function go(view) { state.view = view; state.error = null; state.notice = null; location.hash = view; render(); }
 
 function stepBody(st, all) {
   const runs = observedRuns();
@@ -611,48 +746,55 @@ function stepBody(st, all) {
   if (st.id === "tools") {
     parts.push(btn("Check tool versions", checkTools, !st.done), toolCheckCard());
   } else if (st.id === "capture" && !st.done) {
-    parts.push(dropZone());
-    if (state.samples.length) {
-      parts.push(h("div", { class: "row", style: "margin-top:10px; align-items:center" },
-        h("span", {}, "Or try a bundled sample:"), ...state.samples.map((n) => btn(n, () => analyzeSample(n), false))));
-    }
-  } else if (st.id === "capture" && st.done) {
-    parts.push(btn("See the traffic", () => { state.view = "traffic"; render(); }, false));
+    parts.push(dropZone(), sampleButtons(), pcapHelp());
+  } else if (st.id === "capture") {
+    parts.push(btn("See the conversations", () => go("traffic"), false));
   } else if (st.id === "baseline" && runs.length && !st.done) {
     parts.push(
-      select("Capture to freeze", runs.map((r) => ({ value: String(r.id), label: runLabel(r) })), String(state.run), (v) => { state.run = Number(v); render(); }),
+      select("Which recording is normal?", runs.map((r) => ({ value: String(r.id), label: runLabel(r) })), String(state.run), (v) => { state.run = Number(v); render(); }),
       h("div", { style: "height:12px" }), baselineForm(state.run));
   } else if (st.id === "compare" && all.find((x) => x.id === "baseline").done) {
     if (runs.length < 2) {
-      parts.push(dropZone());
-      if (state.samples.length) {
-        parts.push(h("div", { class: "row", style: "margin-top:10px; align-items:center" },
-          h("span", {}, "Or try a bundled sample:"), ...state.samples.map((n) => btn(n, () => analyzeSample(n), false))));
-      }
+      parts.push(dropZone(), sampleButtons());
     } else {
       parts.push(h("div", { class: "row" },
-        btn("See the changes", () => { state.view = "changes"; render(); }, true),
-        h("span", {}, "Analyze another capture any time from the Traffic page.")));
+        btn("See what changed", () => go("changes"), true),
+        h("span", {}, "Load another recording any time from Conversations.")));
     }
+  } else if (st.id === "plc") {
+    parts.push(btn(st.done ? "Check another program" : "Check a PLC program", () => go("plc"), !st.done));
   } else if (st.id === "doctor") {
     parts.push(h("div", { class: "row" },
-      h("label", {}, "Image (blank for " + (DATA.image || "the default") + ")",
+      h("label", {}, "Tool image to test (blank for " + (DATA.image || "the default") + ")",
         h("input", { type: "text", placeholder: DATA.image || "rehub:pinned", value: state.doctorImage, oninput: (e) => { state.doctorImage = e.target.value; } })),
-      btn(st.done ? "Run doctor again" : "Run doctor", runDoctor, !st.done),
-      st.done ? btn("See the results", () => { state.view = "doctor"; render(); }, false) : null));
+      btn(st.done ? "Test again" : "Run the upgrade check", runDoctor, !st.done),
+      st.done ? btn("See the results", () => go("doctor"), false) : null));
   } else if (st.id === "rules") {
-    parts.push(btn("Open Rules", () => { state.view = "rules"; render(); }, false));
+    parts.push(btn("Open detection rules", () => go("rules"), false));
   }
   return parts;
+}
+
+function dataCard() {
+  const home = DATA.home || "~/.rehub";
+  return h("div", { class: "panel card", style: "margin-top:20px; max-width:880px" },
+    h("h3", {}, "Where your data is"),
+    h("p", {}, "Everything stays on this computer. Nothing is sent anywhere unless you choose a hosted AI model, and then you see the exact text and confirm first."),
+    h("div", { class: "datapaths" },
+      h("div", {}, h("span", {}, "Database (one SQLite file): "), `${home}/rehub.db`),
+      h("div", {}, h("span", {}, "Recordings you loaded: "), `${home}/uploads`),
+      h("div", {}, h("span", {}, "Tool output: "), `${home}/runs`),
+      h("div", {}, h("span", {}, "Settings: "), `${home}/config.toml`)),
+    h("p", { style: "margin-top:10px" }, "Delete that folder to remove everything. Set REHUB_HOME to keep it somewhere else."));
 }
 
 function viewStart() {
   const all = steps();
   const next = nextStep();
   return [
-    h("h1", {}, "Start"),
-    h("p", { class: "lede" }, "rehub reviews traffic from your control network without touching it. Work down this list: freeze what normal looks like, then check every later capture, and your tools, against it."),
-    h("ol", { class: "flow" }, all.map((st, i) => {
+    h("h1", {}, "Did anything change on your plant network?"),
+    h("p", { class: "lede" }, "rehub compares a new recording of your network with one you called normal. It also reviews updated PLC programs and tests your monitoring tools. It only reads files and never sends anything to your network. Work down this list."),
+    h("ol", { class: "flow" }, all.map((st) => {
       const isNext = next && next.id === st.id;
       const status = st.done ? "Done" : st.locked ? st.locked : isNext ? "Do this next" : st.optional ? "Optional" : "Later";
       return h("li", { class: `step${st.done ? " done" : ""}${isNext ? " next" : ""}${st.locked ? " locked" : ""}`, "aria-current": isNext ? "step" : false },
@@ -663,6 +805,7 @@ function viewStart() {
         st.summary ? h("p", { class: "summary" }, st.summary) : null,
         st.locked ? null : h("div", { class: "step-body" }, stepBody(st, all)));
     })),
+    LIVE ? dataCard() : null,
   ];
 }
 
@@ -670,24 +813,24 @@ function nextLine() {
   const next = nextStep();
   if (!next || state.view === "start") return null;
   return h("p", { class: "nextline" }, "Next step: ", h("strong", {}, next.title), " ",
-    h("button", { type: "button", class: "link", onclick: () => { state.view = "start"; location.hash = "start"; render(); } }, "Go to Start"));
+    h("button", { type: "button", class: "link", onclick: () => go("start") }, "Go to Start"));
 }
 
-/* ---- views ---- */
+/* ---- pages ---- */
 function viewChanges() {
   const runs = observedRuns();
-  const head = h("h1", {}, "Changes");
+  const head = h("h1", {}, "What changed");
   if (!runs.length) {
-    return [head, empty("No capture analyzed yet",
-      h("p", {}, LIVE ? "Analyze a capture first, then freeze one as your baseline of normal traffic." : "Analyze a capture to compare it with a baseline."),
-      LIVE ? btn("Go to Traffic", () => { state.view = "traffic"; render(); }, true) : h("p", {}, h("code", {}, "rehub analyze capture.pcap")))];
+    return [head, empty("No recording loaded yet",
+      h("p", {}, LIVE ? "Load a recording first, then save one as your normal snapshot." : "Load a recording to compare it with a normal snapshot."),
+      LIVE ? btn("Go to Start", () => go("start"), true) : h("p", {}, h("code", {}, "rehub analyze capture.pcap")))];
   }
   if (!DATA.baselines.length) {
     return [head, h("div", { class: "panel card" },
-      h("h3", {}, "No baseline yet"),
-      h("p", {}, "A baseline is the traffic you call normal. Freeze a capture, then compare later captures with it. A saved baseline never changes."),
+      h("h3", {}, "No normal snapshot yet"),
+      h("p", {}, "A normal snapshot is the traffic you call normal. Save a recording as one, then compare later recordings with it. A saved snapshot never changes."),
       LIVE ? [
-        select("Capture to freeze", runs.map((r) => ({ value: String(r.id), label: runLabel(r) })), String(state.run), (v) => { state.run = Number(v); render(); }),
+        select("Which recording is normal?", runs.map((r) => ({ value: String(r.id), label: runLabel(r) })), String(state.run), (v) => { state.run = Number(v); render(); }),
         h("div", { style: "height:12px" }),
         baselineForm(state.run),
       ] : h("p", {}, h("code", {}, "rehub baseline save plant-normal --run " + runs[0].id)))];
@@ -707,23 +850,25 @@ function viewChanges() {
     if (inRun) return newPairs.has(pairKey(i)) ? "new-pair" : "new-action";
     return missingPairs.has(pairKey(i)) ? "missing-pair" : "missing-action";
   });
-
-  const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+  const said = describeChanges(d);
   const verdict = d.clean
-    ? "This capture matches the baseline."
-    : `${plural(d.new_pairs.length, "new host pair")}, ${plural(d.new_actions.length, "new action")}, ${plural(d.missing_pairs.length, "pair")} not seen.`;
+    ? "This recording matches your normal snapshot. Nothing new, nothing missing."
+    : `Compared with your normal snapshot: ${plural(d.new_pairs.length, "new device pair")}, ${plural(d.new_actions.length, "new action")}, ${plural(d.missing_pairs.length, "pair")} gone quiet.`;
   return [
     head,
-    h("p", { class: "lede" }, verdict, " Baselines never change; adopting new behavior means saving a new baseline."),
+    h("p", { class: "lede" }, verdict, " Snapshots never change; to accept new behavior, save a new snapshot."),
     h("div", { class: "controls" },
-      select("Baseline", DATA.baselines.map((b) => ({ value: b.name, label: `${b.name} (${b.count} items, ${b.sha256.slice(0, 8)})` })), state.baseline,
+      select("Normal snapshot", DATA.baselines.map((b) => ({ value: b.name, label: `${b.name} (${plural(b.count, "conversation")}, ${b.sha256.slice(0, 8)})` })), state.baseline,
         (v) => { state.baseline = v; render(); }),
-      select("Capture", runs.map((r) => ({ value: String(r.id), label: runLabel(r) })), String(state.run),
+      select("Recording to check", runs.map((r) => ({ value: String(r.id), label: runLabel(r) })), String(state.run),
         (v) => { state.run = Number(v); render(); })),
+    said.length ? [h("p", { class: "section-title", style: "margin-top:0" }, "In plain words"),
+      h("ul", { class: "changes" }, said.map((c) => h("li", { class: c.level }, h("span", { class: "said" }, c.say), h("span", { class: "hint" }, c.hint))))] : null,
+    h("p", { class: "section-title" }, "Every conversation"),
     h("ul", { class: "panel rungs" }, rows.map(rung)),
     LIVE ? h("details", { class: "panel card", style: "margin-top:16px" },
-      h("summary", {}, "Adopt this capture as a new baseline"),
-      h("p", {}, "This saves a new baseline under a new name. The existing baseline stays exactly as it is."),
+      h("summary", {}, "Accept this recording as a new normal"),
+      h("p", {}, "This saves a new snapshot under a new name. The existing one stays exactly as it is."),
       baselineForm(state.run)) : null,
   ];
 }
@@ -732,31 +877,26 @@ function analysisCard() {
   const a = state.analysis;
   if (!a) return null;
   return h("div", { class: "panel card" },
-    h("h3", {}, `Analyzed ${a.filename}`),
+    h("h3", {}, `Loaded ${a.filename}`),
     h("div", {}, a.runs.map((r) => h("div", { class: "toolrow" },
       h("span", {}, `${r.tool} ${r.version}`),
       h("span", {}, r.error ? r.error : Object.entries(r.summary).map(([k, v]) => `${k} ${v}`).join(", ") || "no output"),
       h("span", {}, `run ${r.run_id}`),
       h("span", { class: r.error ? "bad" : "" }, r.error ? "Failed" : "Done")))),
     a.zeek_run_id != null && !DATA.baselines.length ? h("div", { style: "margin-top:14px" },
-      h("p", {}, "Save this capture as your baseline of normal traffic:"), baselineForm(a.zeek_run_id)) : null);
+      h("p", {}, "Is this a normal day? Save it as your normal snapshot:"), baselineForm(a.zeek_run_id)) : null);
 }
 
 function viewTraffic() {
   const runs = observedRuns();
-  const parts = [h("h1", {}, "Traffic")];
+  const parts = [h("h1", {}, "Conversations")];
   if (LIVE) {
-    parts.push(h("p", { class: "lede" }, "Analyze a capture to see which hosts talk, over which protocol, and what engineering actions they perform."), dropZone());
-    if (state.samples.length) {
-      parts.push(h("div", { class: "row", style: "margin:12px 0 0; align-items:center" },
-        h("span", {}, "No capture handy? Try a bundled sample:"),
-        ...state.samples.map((n) => btn(n, () => analyzeSample(n), false))));
-    }
-    parts.push(h("div", { style: "height:16px" }), analysisCard());
+    parts.push(h("p", { class: "lede" }, "Who talks to whom, over which protocol, and which risky actions they perform. Load a recording to see it."), dropZone(), sampleButtons(), h("div", { style: "height:16px" }), analysisCard());
+  } else {
+    parts.push(h("p", { class: "lede" }, "Who talks to whom, over which protocol, and which risky actions they perform."));
   }
-  else parts.push(h("p", { class: "lede" }, "Host pairs, protocols and engineering actions seen in a capture. A plain connection shows only the protocol."));
   if (!runs.length) {
-    if (!LIVE) parts.push(empty("No capture analyzed yet", h("p", {}, "Flows appear here after you analyze a capture."), h("p", {}, h("code", {}, "rehub analyze capture.pcap"))));
+    if (!LIVE) parts.push(empty("No recording loaded yet", h("p", {}, h("code", {}, "rehub analyze capture.pcap"))));
     return parts;
   }
   const items = DATA.observations[String(state.trafficRun)] || [];
@@ -764,41 +904,123 @@ function viewTraffic() {
   const notes = DATA.runs.filter((r) => r.input_sha256 === current.input_sha256 && r.tool !== "zeek");
   parts.push(
     h("div", { class: "controls" },
-      select("Capture", runs.map((r) => ({ value: String(r.id), label: runLabel(r) })), String(state.trafficRun),
+      select("Recording", runs.map((r) => ({ value: String(r.id), label: runLabel(r) })), String(state.trafficRun),
         (v) => { state.trafficRun = Number(v); render(); })),
     h("ul", { class: "panel rungs" }, items.map((i) => rung({ item: i, st: "seen" }))),
-    notes.length ? h("p", { class: "lede", style: "margin-top:12px" }, "Also stored for this capture: " + notes.map((n) => `${n.tool} ${n.version} (run ${n.id})`).join(", ") + ".") : null);
+    notes.length ? h("p", { class: "lede", style: "margin-top:12px" }, "Also stored for this recording: " + notes.map((n) => `${n.tool} ${n.version}`).join(", ") + ".") : null);
   return parts;
 }
 
+/* ---- PLC code ---- */
+function findingCard(f, isNew) {
+  return h("div", { class: "finding" },
+    h("span", { class: `sev ${f.severity}` }, f.severity[0].toUpperCase() + f.severity.slice(1)),
+    isNew ? h("span", { class: "sev high", style: "margin-left:8px" }, "New since approved") : null,
+    h("h4", {}, f.title),
+    h("code", {}, `line ${f.line}: ${f.code}`),
+    h("p", {}, h("span", { class: "lbl" }, "Why it matters: "), f.why),
+    h("p", {}, h("span", { class: "lbl" }, "What to check: "), f.check));
+}
+
+function comparisonCard(c) {
+  const changed = c.value_changes.length || c.added.length || c.removed.length;
+  return h("div", { class: "panel card" },
+    h("h3", {}, `Compared with the approved version of ${c.against}`),
+    !changed && !c.unchanged ? null : null,
+    c.unchanged && !c.value_changes.length ? h("p", {}, "No changes. This is the same logic as the approved version.") : null,
+    c.value_changes.length ? [h("p", { class: "lbl", style: "color:var(--ink)" }, "Numbers that changed (setpoints, limits, timers):"),
+      ...c.value_changes.map((v) => h("div", { class: "diffline val" }, `line ${v.line}: ${v.before}  ->  ${v.after}`))] : null,
+    c.added.length ? [h("p", { class: "lbl", style: "color:var(--ink); margin-top:10px" }, `New lines (${c.added.length}):`),
+      ...c.added.slice(0, 60).map((l) => h("div", { class: "diffline add" }, "+ " + l))] : null,
+    c.removed.length ? [h("p", { class: "lbl", style: "color:var(--ink); margin-top:10px" }, `Removed lines (${c.removed.length}):`),
+      ...c.removed.slice(0, 60).map((l) => h("div", { class: "diffline del" }, "- " + l))] : null,
+    c.new_findings.length ? h("p", { class: "lbl", style: "color:var(--major); margin-top:12px" }, `${plural(c.new_findings.length, "thing")} to review that the approved version did not have. They are marked "New since approved" above.`) : null,
+    c.resolved_findings.length ? h("p", { style: "margin-top:10px" }, `${plural(c.resolved_findings.length, "thing")} to review in the approved version no longer appear.`) : null);
+}
+
+function plcResult(r) {
+  const n = r.counts;
+  const total = n.high + n.medium + n.low;
+  const norm = (f) => f.rule + "|" + f.code.replace(/\s+/g, " ").toLowerCase();
+  const fresh = new Set(r.comparison ? r.comparison.new_findings.map(norm) : []);
+  return [
+    h("div", { class: "panel card" },
+      h("h3", {}, total ? `${plural(total, "thing")} to review in ${r.filename}` : `Nothing risky found in ${r.filename}`),
+      h("p", {}, total
+        ? `${n.high} high, ${n.medium} medium, ${n.low} low. Each one says why it matters and what to check.`
+        : "These checks found nothing. That does not mean the program is safe: the checks look for a short list of patterns."),
+      total ? h("div", { class: "panel", style: "margin-top:8px" }, r.findings.map((f) => findingCard(f, fresh.has(norm(f))))) : null),
+    r.comparison ? comparisonCard(r.comparison)
+      : h("div", { class: "panel card" }, h("h3", {}, "No approved version to compare with"),
+          h("p", {}, `There is no approved program named ${r.name} yet. If you trust this version, approve it below. Later uploads with the same name are compared with it and every change is shown.`)),
+    LIVE ? h("div", { class: "panel card" },
+      h("h3", {}, "Approve this version"),
+      h("p", {}, "Only approve a version a person has reviewed. Approved versions are kept and can never be changed."),
+      h("div", { class: "row" },
+        h("label", {}, "Program name",
+          h("input", { type: "text", value: state.plc.approveName, placeholder: r.name, oninput: (e) => { state.plc.approveName = e.target.value; } })),
+        btn("Approve this version", approvePlc, true))) : null,
+  ];
+}
+
+function viewPlc() {
+  const parts = [h("h1", {}, "PLC code")];
+  parts.push(h("p", { class: "lede" }, "Upload the source of a PLC program: Structured Text or SCL as a text file, or a Rockwell L5X export. rehub flags patterns a person should look at, and shows what changed since the version you approved. It is a review, not a vulnerability scan: it cannot test the controller's firmware."));
+  if (LIVE) {
+    parts.push(h("div", { class: "panel card" },
+      h("h3", {}, "Check a program"),
+      h("div", { class: "row" },
+        h("label", {}, "Program file",
+          h("input", { type: "file", accept: ".st,.scl,.txt,.l5x,.xml,.awl,.exp", onchange: (e) => { state.plc.file = e.target.files[0] || null; state.plc.result = null; render(); } }),
+          h("span", { style: "font:12px var(--body); color:var(--ink-2)" }, state.plc.file ? state.plc.file.name : "None chosen")),
+        h("label", {}, "Compare with approved program named (optional)",
+          h("input", { type: "text", placeholder: state.plc.file ? state.plc.file.name.replace(/\.[^.]+$/, "") : "the file name", value: state.plc.name, oninput: (e) => { state.plc.name = e.target.value; } })),
+        btn("Check program", checkPlc, true))));
+    if (state.plc.result) parts.push(...plcResult(state.plc.result));
+  } else {
+    parts.push(empty("Upload happens in the live interface", h("p", {}, "Run rehub web, or use the command line:"), h("p", {}, h("code", {}, "rehub plc check program.st"))));
+  }
+  if (DATA.plc_programs.length) {
+    parts.push(h("div", { class: "panel card" },
+      h("h3", {}, "Approved programs"),
+      DATA.plc_programs.map((p) => h("dl", { class: "kv", style: "margin:0 0 10px" },
+        h("dt", {}, "name"), h("dd", {}, `${p.name} (version ${p.id})`),
+        h("dt", {}, "file"), h("dd", {}, p.filename),
+        h("dt", {}, "approved"), h("dd", {}, when(p.approved_at)),
+        h("dt", {}, "fingerprint"), h("dd", {}, p.sha256.slice(0, 16))))));
+  }
+  return parts;
+}
+
+/* ---- tool upgrade check ---- */
 function toolCheckCard() {
   const t = state.toolCheck;
   if (!t) return null;
   return h("div", { class: "panel card" },
     h("h3", {}, `Tool versions in ${t.image}`),
     t.tools.map((r) => h("div", { class: "toolrow" },
-      h("span", {}, r.component), h("span", {}, `pinned ${r.pinned}`), h("span", {}, `installed ${r.installed}`),
+      h("span", {}, r.component), h("span", {}, `expected ${r.pinned}`), h("span", {}, `found ${r.installed}`),
       h("span", { class: r.ok ? "" : "bad" }, r.ok ? "Match" : "Differs"))));
 }
 
 function viewDoctor() {
-  const parts = [h("h1", {}, "Doctor")];
-  parts.push(h("p", { class: "lede" }, "Replays synthetic captures through every tool and compares the output with the committed golden files. A difference after a tool upgrade is what this check exists to catch."));
+  const parts = [h("h1", {}, "Upgrade check")];
+  parts.push(h("p", { class: "lede" }, "Your monitoring tools change between versions, and a change can quietly alter what they report. This replays built-in test recordings through every tool and compares the results with what was expected. Run it on a new version before you roll it out."));
   if (LIVE) {
     parts.push(h("div", { class: "panel card" },
-      h("h3", {}, "Check an image"),
-      h("p", {}, "Leave the image blank to check " + (DATA.image || "the default image") + ". To test an upgrade first, enter a candidate such as rehub:candidate."),
+      h("h3", {}, "Test a tool image"),
+      h("p", {}, "Leave the image blank to test " + (DATA.image || "the default image") + ". To test an upgrade first, enter the new image, for example rehub:candidate."),
       h("div", { class: "row" },
         h("label", {}, "Image",
           h("input", { type: "text", placeholder: DATA.image || "rehub:pinned", value: state.doctorImage,
             oninput: (e) => { state.doctorImage = e.target.value; } })),
-        btn("Run doctor", runDoctor, true),
+        btn("Run the upgrade check", runDoctor, true),
         btn("Check tool versions", checkTools, false))),
       toolCheckCard());
   }
   if (!DATA.doctor.length) {
-    parts.push(empty("Doctor has not run yet",
-      LIVE ? h("p", {}, "Run it above to compare every tool with its golden output.") : [h("p", {}, "Run it from the command line:"), h("p", {}, h("code", {}, "rehub doctor"))]));
+    parts.push(empty("Not run yet",
+      LIVE ? h("p", {}, "Run it above to compare every tool with what was expected.") : [h("p", {}, "Run it from the command line:"), h("p", {}, h("code", {}, "rehub doctor"))]));
     return parts;
   }
   const byTool = new Map();
@@ -811,7 +1033,7 @@ function viewDoctor() {
       h("header", {},
         h("h2", {}, tool),
         h("span", { class: "ver" }, `${rows[0].version} in ${rows[0].image}`),
-        h("span", { class: "verdict" }, failed ? "Differences found" : "Matches golden output")),
+        h("span", { class: "verdict" }, failed ? "Behaves differently" : "Behaves as expected")),
       rows.map((r) => h("div", { class: `fx ${r.status === "PASS" ? "" : "fail"}` },
         h("span", { class: "name" }, r.fixture),
         h("span", { class: "status" }, r.status === "PASS" ? "Pass" : "Fail"),
@@ -820,16 +1042,17 @@ function viewDoctor() {
   return parts;
 }
 
+/* ---- detection rules ---- */
 function yaraCard() {
   const fileInput = h("input", { type: "file", onchange: (e) => { state.ruleSample = e.target.files[0] || null; } });
   const result = state.yara;
   return h("div", { class: "panel card" },
     h("h3", {}, "Scan a file with a rule"),
-    h("p", {}, "Paste a YARA rule and choose a sample. The scan runs in the tool image with no network."),
+    h("p", {}, "Paste a YARA rule and choose a file. The scan runs in the tool image with no network."),
     h("textarea", { "aria-label": "YARA rule", spellcheck: "false", placeholder: 'rule Example\n{\n    strings:\n        $a = "P_PROGRAM"\n    condition:\n        $a\n}',
       oninput: (e) => { state.rules = e.target.value; } }, state.rules),
     h("div", { class: "row", style: "margin-top:10px" },
-      h("label", {}, "Sample file", fileInput),
+      h("label", {}, "File to scan", fileInput),
       btn("Scan", scanYara, true)),
     result ? h("div", {},
       h("p", { style: "margin:12px 0 0" }, result.matches.length ? `${result.file} matched:` : `No rule matched ${result.file}.`),
@@ -849,7 +1072,7 @@ function draftCard() {
   const r = state.draftResult;
   return h("div", { class: "panel card" },
     h("h3", {}, "Draft a rule with a model"),
-    h("p", {}, "The model sees your description and, if it asks for a fix, the rule and the compiler error. It never sees your sample files. The rule is then compiled and tested against the samples here."),
+    h("p", {}, "The model sees your description and, if it asks for a fix, the rule and the compiler error. It never sees your files. The rule is then compiled and tested on your files here."),
     h("label", { class: "stack" }, "What should it detect?",
       h("textarea", { style: "min-height:70px; font:14px/1.4 var(--body)", "aria-label": "Description", spellcheck: "true",
         placeholder: "S7comm job request that stops the PLC",
@@ -861,7 +1084,7 @@ function draftCard() {
         h("input", { type: "text", placeholder: hosted ? "default: claude-sonnet-5-5" : "name of your Ollama model", value: state.draftModel,
           oninput: (e) => { state.draftModel = e.target.value; } }))),
     h("div", { class: "row", style: "margin-top:10px" },
-      filePicker("Samples it must match", "draftPositives"),
+      filePicker("Files it must match", "draftPositives"),
       filePicker("Clean files it must not match", "draftBenign")),
     hosted ? h("p", { style: "margin:12px 0 0" }, "A hosted model is a third party. You will see exactly what would be sent before anything leaves this computer.") : null,
     h("div", { style: "margin-top:12px" }, btn("Draft rule", () => draftRule(false), true)),
@@ -891,12 +1114,12 @@ function draftResult(r) {
 }
 
 function viewRules() {
-  const parts = [h("h1", {}, "Rules")];
-  parts.push(h("p", { class: "lede" }, "A rule is validated only when it compiled and matched every positive sample and no benign file. Unvalidated rules need a human review."));
+  const parts = [h("h1", {}, "Detection rules")];
+  parts.push(h("p", { class: "lede" }, "A rule is validated only when it compiled and matched every file you said it must match and none you said it must not. Unvalidated rules need a human review."));
   if (LIVE) parts.push(draftCard(), yaraCard());
   if (!DATA.rules.length) {
-    parts.push(empty("No drafted rules yet",
-      h("p", {}, "Rules written with a model are stored here with their test status."),
+    parts.push(empty("No rules saved yet",
+      h("p", {}, "Rules written with a model are saved here with their test result."),
       LIVE ? null : h("p", {}, h("code", {}, 'rehub yara draft "describe what to detect" --positive sample.bin --benign clean-dir'))));
     return parts;
   }
@@ -909,15 +1132,88 @@ function viewRules() {
   return parts;
 }
 
+/* ---- help assistant ---- */
+const QUICK_QUESTIONS = [
+  "What is a capture (pcap) file?",
+  "Where do I get a capture?",
+  "What is a normal snapshot?",
+  "Is it safe to use on a live plant?",
+  "Where is my data stored?",
+  "Can it find CVEs in my PLC?",
+];
+
+async function askHelp(question, useModel, yes) {
+  const q = question.trim();
+  if (!q || state.help.busy) return;
+  state.help.busy = true; state.help.error = null; renderHelp();
+  try {
+    const res = await postJson("/api/guide", { question: q, use_model: !!useModel, provider: state.help.provider, model: state.help.model.trim(), yes: yes === true });
+    if (res.needs_confirmation) { state.help.confirm = { ...res, question: q }; }
+    else { state.help.confirm = null; state.help.log.push({ q, res }); state.help.question = ""; }
+  } catch (e) {
+    state.help.error = e.message || String(e);
+  }
+  state.help.busy = false;
+  renderHelp();
+  const asked = document.querySelectorAll("#help .log .q");
+  if (asked.length) asked[asked.length - 1].scrollIntoView({ block: "start" });
+}
+
+function renderHelp() {
+  const btnEl = document.getElementById("helpbtn");
+  const panel = document.getElementById("help");
+  btnEl.hidden = !LIVE;
+  btnEl.setAttribute("aria-expanded", String(state.help.open));
+  panel.hidden = !LIVE || !state.help.open;
+  if (panel.hidden) return;
+  const hp = state.help;
+  const entries = hp.log.map(({ q, res }) => [
+    h("p", { class: "q" }, q),
+    res.source === "none"
+      ? h("div", {}, h("p", { class: "a" }, "I do not have a built-in answer for that. I can explain these:"),
+          h("div", { class: "chips" }, res.topics.map((t) => h("button", { type: "button", class: "chip", onclick: () => askHelp(t, false) }, t))),
+          h("button", { type: "button", class: "chip", onclick: () => askHelp(q, true) }, "Ask the AI model instead"))
+      : h("div", {}, h("p", { class: "a" }, res.answer),
+          h("span", { class: "src" }, res.source === "model" ? `Answer from the ${res.provider} model. It can be wrong.` : "From the built-in manual.")),
+  ]);
+  const confirm = hp.confirm ? h("div", { class: "boxed" },
+    h("strong", {}, `Nothing has been sent yet. This question and the built-in manual would go to ${hp.confirm.provider}:`),
+    h("pre", {}, hp.confirm.user),
+    h("details", {}, h("summary", {}, "Show the manual that goes with it"), h("pre", {}, hp.confirm.system)),
+    h("div", { class: "row", style: "margin-top:8px" },
+      h("button", { type: "button", class: "btn primary", onclick: () => askHelp(hp.confirm.question, true, true) }, `Send to ${hp.confirm.provider}`),
+      h("button", { type: "button", class: "btn", onclick: () => { hp.confirm = null; renderHelp(); } }, "Cancel"))) : null;
+  const input = h("input", { type: "text", "aria-label": "Your question", placeholder: "Ask anything about using rehub", value: hp.question,
+    oninput: (e) => { hp.question = e.target.value; } });
+  panel.replaceChildren(
+    h("header", {}, h("strong", {}, "Ask about rehub"), h("span", {}, "Answers come from the built-in manual. Your recordings and code are never part of a question.")),
+    h("div", { class: "log" },
+      entries.length ? entries : h("div", {}, h("p", { class: "a" }, "Not sure where to start? Pick a question:"),
+        h("div", { class: "chips" }, QUICK_QUESTIONS.map((t) => h("button", { type: "button", class: "chip", onclick: () => askHelp(t, false) }, t)))),
+      confirm,
+      hp.error ? h("p", { class: "a", role: "alert", style: "color:var(--major)" }, hp.error) : null,
+      hp.busy ? h("p", { class: "src" }, "Thinking...") : null),
+    h("details", {},
+      h("summary", {}, "Use an AI model for other questions"),
+      h("div", { class: "row", style: "margin-top:8px" },
+        select("Model", [{ value: "ollama", label: "Local (Ollama)" }, { value: "anthropic", label: "Hosted (Anthropic)" }], hp.provider, (v) => { hp.provider = v; hp.confirm = null; renderHelp(); }),
+        h("label", {}, "Model name", h("input", { type: "text", placeholder: hp.provider === "anthropic" ? "default" : "your Ollama model", value: hp.model, oninput: (e) => { hp.model = e.target.value; } }))),
+      h("div", { style: "margin-top:8px" }, h("button", { type: "button", class: "btn", onclick: () => askHelp(hp.question, true) }, "Ask the model"))),
+    h("form", { onsubmit: (e) => { e.preventDefault(); askHelp(hp.question, false); } }, input,
+      h("button", { type: "submit", class: "btn primary", disabled: hp.busy }, "Ask")));
+}
+
+document.getElementById("helpbtn").addEventListener("click", () => { state.help.open = !state.help.open; renderHelp(); });
+
 /* ---- shell ---- */
 function annunciator() {
   const d = diffFor();
   const fails = DATA.doctor.filter((r) => r.status !== "PASS").length;
   const windows = [
-    ["New host pair", d ? d.new_pairs.length : 0, "major"],
-    ["New action", d ? d.new_actions.length : 0, "minor"],
-    ["Pair not seen", d ? d.missing_pairs.length : 0, "advisory"],
-    ["Doctor failing", fails, "major"],
+    ["New device pair", d ? d.new_pairs.length : 0, "major", !!d],
+    ["New action", d ? d.new_actions.length : 0, "minor", !!d],
+    ["Went quiet", d ? d.missing_pairs.length : 0, "advisory", !!d],
+    ["Upgrade check failing", fails, "major", DATA.doctor.length > 0],
   ];
   document.getElementById("annunciator").replaceChildren(...windows.map(([legend, n, level]) =>
     h("div", { class: `win ${n ? "lit " + level : ""}` },
@@ -929,25 +1225,25 @@ function annunciator() {
 function banner() {
   const box = document.getElementById("banner");
   if (state.busy) box.replaceChildren(h("div", { class: "banner busy", role: "status" }, state.busy));
-  else if (state.error) box.replaceChildren(h("div", { class: "banner error", role: "alert" }, h("strong", {}, "Could not finish. "), state.error));
+  else if (state.error) box.replaceChildren(h("div", { class: "banner error", role: "alert" }, h("strong", {}, "That did not work. "), state.error));
   else if (state.notice) box.replaceChildren(h("div", { class: "banner", role: "status" }, state.notice));
   else box.replaceChildren();
 }
 
 function renderNav() {
   document.getElementById("nav").replaceChildren(...VIEWS.map((v) =>
-    h("button", { type: "button", "aria-current": v.id === state.view ? "page" : false,
-      onclick: () => { state.view = v.id; state.error = null; state.notice = null; location.hash = v.id; render(); } }, v.label)));
+    h("button", { type: "button", "aria-current": v.id === state.view ? "page" : false, onclick: () => go(v.id) }, v.label)));
 }
 
 function render() {
   renderNav();
   annunciator();
   banner();
-  const body = { start: viewStart, changes: viewChanges, traffic: viewTraffic, doctor: viewDoctor, rules: viewRules }[state.view]();
+  const body = { start: viewStart, changes: viewChanges, traffic: viewTraffic, plc: viewPlc, doctor: viewDoctor, rules: viewRules }[state.view]();
   const line = LIVE ? nextLine() : null;
   if (line) body.splice(1, 0, line);
-  document.getElementById("view").replaceChildren(...body);
+  document.getElementById("view").replaceChildren(...body.flat(Infinity).filter(Boolean));
+  renderHelp();
 }
 
 async function init() {
@@ -964,7 +1260,7 @@ async function init() {
       return;
     }
     await loadSamples();
-    document.getElementById("meta").textContent = `Live on this computer. Tools run in ${DATA.image} with no network.`;
+    document.getElementById("meta").textContent = `Your data stays on this computer in ${DATA.home}. Tools run in ${DATA.image} with no network.`;
   } else {
     pickDefaults();
     document.getElementById("meta").textContent = `Snapshot of ${when(DATA.generated_at)}. Read only.`;
