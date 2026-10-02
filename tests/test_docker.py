@@ -45,3 +45,39 @@ def test_analyze_and_baseline_diff_end_to_end(
     assert "NEW PAIR      10.0.0.99 -> 10.0.0.20" in diff.output
     assert "NEW ACTION    10.0.0.10 -> 10.0.0.20  s7comm  stop" in diff.output
     assert "MISSING PAIR  10.0.0.11 -> 10.0.0.21" in diff.output
+
+
+@pytest.mark.skipif(not image_available(), reason=f"{DEFAULT_IMAGE} not built")
+def test_yara_draft_against_real_yr(tmp_path: Path) -> None:
+    from rehub import yara_ai
+    from rehub.runner import DockerRunner
+
+    root = Path(__file__).resolve().parents[1] / "fixtures" / "yara" / "samples"
+    benign = tmp_path / "benign"
+    benign.mkdir()
+    (benign / "notes.txt").write_bytes((root / "benign.txt").read_bytes())
+    engine = yara_ai.RunnerEngine(DockerRunner(DEFAULT_IMAGE))
+    good = 'rule T { strings: $a = "P_PROGRAM" condition: $a }'
+
+    class Canned:
+        hosted = False
+        name = "canned"
+
+        def __init__(self, reply: str) -> None:
+            self.reply = reply
+
+        def complete(self, system: str, user: str) -> str:
+            return self.reply
+
+    stop = root / "s7_stop_payload.bin"
+    ok = yara_ai.draft(Canned(f"```yara\n{good}\n```"), engine, "x", [stop], benign)
+    assert ok.status == "validated", ok
+
+    broken = yara_ai.draft(Canned("rule Bad { condition: $nope }"), engine, "x", [stop], benign)
+    assert broken.status == "unvalidated"
+    assert broken.compile_error
+    assert "unknown pattern" in broken.compile_error
+
+    misses = yara_ai.draft(Canned(good.replace("P_PROGRAM", "ZZZ")), engine, "x", [stop], benign)
+    assert misses.status == "unvalidated"
+    assert misses.positives == {"s7_stop_payload.bin": False}
