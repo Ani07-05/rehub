@@ -88,6 +88,7 @@ def snapshot(conn: sqlite3.Connection) -> dict[str, Any]:
         "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "home": str(db.home()),
         "plc_programs": db.list_plc_programs(conn),
+        "device_labels": db.device_labels(conn),
         "runs": run_rows,
         "observations": observations,
         "baselines": baselines,

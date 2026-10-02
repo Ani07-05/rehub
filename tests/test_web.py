@@ -394,3 +394,69 @@ def test_guide_hosted_model_needs_confirmation_and_never_gets_more(
 def test_guide_validates_question(server: ThreadingHTTPServer) -> None:
     assert call(server, "/api/guide", "POST", {"question": ""}, POST)[0] == 400
     assert call(server, "/api/guide", "POST", {"question": "x" * 1001}, POST)[0] == 400
+
+
+def test_device_labels_set_clear_and_validate(server: ThreadingHTTPServer) -> None:
+    status, res = call(
+        server, "/api/devices", "POST", {"ip": "10.0.0.20", "label": " Boiler PLC "}, POST
+    )
+    assert status == 200
+    assert isinstance(res, dict)
+    assert res["label"] == "Boiler PLC"
+    status, state = call(server, "/api/state")
+    assert isinstance(state, dict)
+    assert state["device_labels"] == {"10.0.0.20": "Boiler PLC"}
+    call(server, "/api/devices", "POST", {"ip": "10.0.0.20", "label": ""}, POST)
+    _, state = call(server, "/api/state")
+    assert isinstance(state, dict)
+    assert state["device_labels"] == {}
+    assert call(server, "/api/devices", "POST", {"ip": "not an ip", "label": "x"}, POST)[0] == 400
+    assert (
+        call(server, "/api/devices", "POST", {"ip": "10.0.0.1", "label": "x" * 61}, POST)[0] == 400
+    )
+    assert (
+        call(server, "/api/devices", "POST", {"ip": "10.0.0.1", "label": "a\x01b"}, POST)[0] == 400
+    )
+
+
+def test_demo_runs_both_samples_and_saves_the_baseline_once(
+    server: ThreadingHTTPServer, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runs = iter(
+        [
+            [("10.0.0.10", "10.0.0.20", "s7comm", "conn")],
+            [
+                ("10.0.0.10", "10.0.0.20", "s7comm", "conn"),
+                ("10.0.0.99", "10.0.0.20", "s7comm", "conn"),
+            ],
+            [("10.0.0.10", "10.0.0.20", "s7comm", "conn")],
+            [("10.0.0.10", "10.0.0.20", "s7comm", "conn")],
+        ]
+    )
+
+    def fake_analyze(self: web.Api, filename: str, source: Path) -> dict[str, Any]:
+        return {
+            "filename": filename,
+            "zeek_run_id": seed(next(runs)),
+            "runs": [],
+            "observations": [],
+        }
+
+    monkeypatch.setattr(web.Api, "analyze", fake_analyze)
+    status, res = call(server, "/api/demo", "POST", {}, POST)
+    assert status == 200
+    assert isinstance(res, dict)
+    assert res["baseline"] == "plant-normal"
+    status, state = call(server, "/api/state")
+    assert isinstance(state, dict)
+    assert [b["name"] for b in state["baselines"]] == ["plant-normal"]
+    assert state["device_labels"]["10.0.0.20"] == "Boiler PLC"
+    diff = state["diffs"][f"plant-normal|{res['changed_run']}"]
+    assert diff["new_pairs"] == [["10.0.0.99", "10.0.0.20"]]
+    call(server, "/api/devices", "POST", {"ip": "10.0.0.20", "label": "Main boiler"}, POST)
+    status, again = call(server, "/api/demo", "POST", {}, POST)
+    assert status == 200
+    _, state = call(server, "/api/state")
+    assert isinstance(state, dict)
+    assert [b["name"] for b in state["baselines"]] == ["plant-normal"]
+    assert state["device_labels"]["10.0.0.20"] == "Main boiler"

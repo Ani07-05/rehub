@@ -129,11 +129,16 @@ Serves the interface at `http://127.0.0.1:8765/` on this computer only. There is
 `Host` header is not loopback (DNS rebinding) and any POST without its `X-Rehub` header (other
 websites).
 
-- **Start:** the guided path. Six steps in order, each with its action on the same page: check the
+- **Start:** a first screen with two choices, "See it work in a minute" (one click runs a made-up
+  plant: a normal recording, saved as normal, then a changed one) or "Use my own recording".
+  Below it is the guided path, with a progress bar and a time estimate for each step.
+  Steps: Six steps in order, each with its action on the same page: check the
   tools, analyze a capture, freeze a baseline, compare a new capture, run doctor before a tool
   upgrade, and optionally draft a rule. The next step is marked, steps that need an earlier one
   are locked, and every other page shows what to do next.
-- **Conversations:** drop a `.pcap` or `.pcapng`. It is analyzed with Zeek, Suricata and tshark (tools
+- **Conversations:** also lists every device with a guess at what it is (client or controller,
+  from how it talks) and lets you name it. Names appear in every finding and are stored in the
+  database. Drop a `.pcap` or `.pcapng`. It is analyzed with Zeek, Suricata and tshark (tools
   run with no network), stored, and drawn as host pair rungs. Captures up to 256 MB.
 - **What changed:** pick a normal snapshot (a baseline) and a recording. It lists the changes in
   plain sentences, then draws every conversation: red is a new device pair, amber a new action,
@@ -144,6 +149,8 @@ websites).
   match and clean files it must not), or scan a sample with a pasted rule. For a hosted model the
   page first shows the exact text that would be sent and sends nothing until you press the send
   button. Sample files stay on this computer. Drafted rules show Validated or Unvalidated.
+- **Copy summary** (on What changed and on PLC results) copies a plain-text summary to paste into
+  an email or ticket.
 - **PLC code:** upload a program, see findings with plain reasons, approve a version, and compare
   later uploads with it. Same checks as `rehub plc`.
 - **Ask for help** (button at the bottom right): answers common questions from a built-in manual,

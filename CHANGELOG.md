@@ -14,6 +14,8 @@
   and scan with rules.
 - `plc approve|check|list`: heuristic review of PLC source and comparison with an approved
   version (not a vulnerability scan).
+- `web` has a one-click demo, device naming with guessed roles, a progress bar with time
+  estimates, and a copy-summary button.
 - `web` is written in plain language, shows changes as sentences, has a PLC code page, shows where
   your data lives, and has a help assistant that answers from a built-in manual.
 - `web` opens on a guided Start page that walks the whole workflow in order.

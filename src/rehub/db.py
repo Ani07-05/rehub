@@ -72,6 +72,11 @@ CREATE TABLE IF NOT EXISTS plc_programs (
     text TEXT NOT NULL,
     approved_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS device_labels (
+    ip TEXT PRIMARY KEY,
+    label TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
 CREATE TRIGGER IF NOT EXISTS plc_programs_no_update BEFORE UPDATE ON plc_programs
 BEGIN SELECT RAISE(ABORT, 'approved programs are immutable'); END;
 CREATE TRIGGER IF NOT EXISTS plc_programs_no_delete BEFORE DELETE ON plc_programs
@@ -200,3 +205,26 @@ def list_plc_programs(conn: sqlite3.Connection) -> list[dict[str, object]]:
         "SELECT id, name, filename, sha256, approved_at FROM plc_programs ORDER BY id DESC"
     ).fetchall()
     return [dict(zip(keys, r, strict=True)) for r in rows]
+
+
+def set_device_label(conn: sqlite3.Connection, ip: str, label: str, replace: bool = True) -> None:
+    label = label.strip()
+    if not label:
+        conn.execute("DELETE FROM device_labels WHERE ip = ?", (ip,))
+    elif replace:
+        conn.execute(
+            "INSERT INTO device_labels (ip, label, updated_at) VALUES (?, ?, ?)"
+            " ON CONFLICT(ip) DO UPDATE SET label = excluded.label,"
+            " updated_at = excluded.updated_at",
+            (ip, label, now()),
+        )
+    else:
+        conn.execute(
+            "INSERT OR IGNORE INTO device_labels (ip, label, updated_at) VALUES (?, ?, ?)",
+            (ip, label, now()),
+        )
+    conn.commit()
+
+
+def device_labels(conn: sqlite3.Connection) -> dict[str, str]:
+    return {r[0]: r[1] for r in conn.execute("SELECT ip, label FROM device_labels ORDER BY ip")}

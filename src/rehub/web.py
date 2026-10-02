@@ -3,6 +3,7 @@ import binascii
 import hashlib
 import json
 import os
+import re
 import tempfile
 import threading
 from collections.abc import Callable
@@ -27,6 +28,11 @@ MAX_JSON = 32 * 1024 * 1024
 CSRF_HEADER = "X-Rehub"
 
 Json = dict[str, Any]
+
+
+_IP = re.compile(r"^[0-9a-fA-F:.]{2,45}$")
+DEMO_BASELINE = "plant-normal"
+DEMO_LABELS = {"10.0.0.20": "Boiler PLC", "10.0.0.10": "Engineering laptop"}
 
 
 class ApiError(Exception):
@@ -158,6 +164,54 @@ class Api:
         finally:
             conn.close()
         return {"name": name.strip(), "sha256": digest}
+
+    def set_device(self, body: Json) -> Json:
+        ip, label = body.get("ip"), body.get("label", "")
+        if not isinstance(ip, str) or not _IP.match(ip):
+            raise ApiError("ip must be an address such as 10.0.0.20")
+        if (
+            not isinstance(label, str)
+            or len(label.strip()) > 60
+            or re.search(r"[\x00-\x1f]", label)
+        ):
+            raise ApiError("a device name is up to 60 characters of plain text")
+        conn = db.connect()
+        try:
+            db.set_device_label(conn, ip, label)
+        finally:
+            conn.close()
+        return {"ip": ip, "label": label.strip()}
+
+    def demo(self) -> Json:
+        names = self.samples()["samples"]
+        if "plant_normal" not in names or "plant_changed" not in names:
+            raise ApiError("the bundled sample recordings are missing from this install", 500)
+        normal = self.analyze_sample({"name": "plant_normal"})
+        if normal["zeek_run_id"] is None:
+            raise ApiError(
+                "the tools could not read the sample recording; check the tool image", 502
+            )
+        conn = db.connect()
+        try:
+            exists = conn.execute(
+                "SELECT 1 FROM baselines WHERE name = ?", (DEMO_BASELINE,)
+            ).fetchone()
+            if not exists:
+                baseline.save(conn, DEMO_BASELINE, normal["zeek_run_id"])
+            for ip, label in DEMO_LABELS.items():
+                db.set_device_label(conn, ip, label, replace=False)
+        finally:
+            conn.close()
+        changed = self.analyze_sample({"name": "plant_changed"})
+        if changed["zeek_run_id"] is None:
+            raise ApiError(
+                "the tools could not read the sample recording; check the tool image", 502
+            )
+        return {
+            "baseline": DEMO_BASELINE,
+            "normal_run": normal["zeek_run_id"],
+            "changed_run": changed["zeek_run_id"],
+        }
 
     def plc_check(self, body: Json) -> Json:
         filename, text = body.get("filename"), body.get("text")
@@ -472,6 +526,10 @@ class Handler(BaseHTTPRequestHandler):
             self._dispatch(lambda: self.api.yara_scan(self._read_json()))
         elif path == "/api/yara/draft":
             self._dispatch(lambda: self.api.yara_draft(self._read_json()))
+        elif path == "/api/devices":
+            self._dispatch(lambda: self.api.set_device(self._read_json()))
+        elif path == "/api/demo":
+            self._dispatch(self.api.demo)
         elif path == "/api/plc/check":
             self._dispatch(lambda: self.api.plc_check(self._read_json()))
         elif path == "/api/plc/approve":
