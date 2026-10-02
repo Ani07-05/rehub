@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import sqlite3
@@ -63,6 +64,18 @@ CREATE TABLE IF NOT EXISTS yara_rules (
     status TEXT NOT NULL CHECK (status IN ('validated', 'unvalidated')),
     created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS plc_programs (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    filename TEXT NOT NULL,
+    sha256 TEXT NOT NULL,
+    text TEXT NOT NULL,
+    approved_at TEXT NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS plc_programs_no_update BEFORE UPDATE ON plc_programs
+BEGIN SELECT RAISE(ABORT, 'approved programs are immutable'); END;
+CREATE TRIGGER IF NOT EXISTS plc_programs_no_delete BEFORE DELETE ON plc_programs
+BEGIN SELECT RAISE(ABORT, 'approved programs are immutable'); END;
 CREATE TRIGGER IF NOT EXISTS baselines_no_update BEFORE UPDATE ON baselines
 WHEN OLD.locked = 1 BEGIN SELECT RAISE(ABORT, 'baseline is immutable'); END;
 CREATE TRIGGER IF NOT EXISTS baselines_no_delete BEFORE DELETE ON baselines
@@ -159,3 +172,31 @@ def record_yara_rule(conn: sqlite3.Connection, name: str, text: str, status: str
     conn.commit()
     assert cur.lastrowid is not None
     return cur.lastrowid
+
+
+def approve_plc_program(conn: sqlite3.Connection, name: str, filename: str, text: str) -> int:
+
+    digest = hashlib.sha256(text.encode()).hexdigest()
+    cur = conn.execute(
+        "INSERT INTO plc_programs (name, filename, sha256, text, approved_at)"
+        " VALUES (?, ?, ?, ?, ?)",
+        (name, filename, digest, text, now()),
+    )
+    conn.commit()
+    assert cur.lastrowid is not None
+    return cur.lastrowid
+
+
+def latest_plc_program(conn: sqlite3.Connection, name: str) -> tuple[int, str, str] | None:
+    row = conn.execute(
+        "SELECT id, sha256, text FROM plc_programs WHERE name = ? ORDER BY id DESC LIMIT 1", (name,)
+    ).fetchone()
+    return (row[0], row[1], row[2]) if row else None
+
+
+def list_plc_programs(conn: sqlite3.Connection) -> list[dict[str, object]]:
+    keys = ("id", "name", "filename", "sha256", "approved_at")
+    rows = conn.execute(
+        "SELECT id, name, filename, sha256, approved_at FROM plc_programs ORDER BY id DESC"
+    ).fetchall()
+    return [dict(zip(keys, r, strict=True)) for r in rows]
