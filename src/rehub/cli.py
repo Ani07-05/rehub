@@ -5,7 +5,7 @@ from pathlib import Path
 import typer
 
 from rehub import baseline as baselines
-from rehub import db, yara_ai
+from rehub import db, yara_ai, yara_fetch
 from rehub.analyze import analyze as run_analysis
 from rehub.diff import summarize
 from rehub.doctor import FIXTURES_DIR, run_doctor
@@ -263,3 +263,18 @@ def yara_draft(
     if out:
         out.write_text(result.rule + "\n")
     raise typer.Exit(0 if result.status == "validated" else 1)
+
+
+@yara_app.command("fetch")
+def yara_fetch_rules(
+    dest: Path = typer.Option(None, "--dest", help="Directory to clone into."),
+) -> None:
+    """Clone the pinned Yara-Rules commit into your own directory (needs network)."""
+    target = dest or db.home() / "yara-rules"
+    typer.echo(yara_fetch.LICENSE_NOTE)
+    try:
+        yara_fetch.fetch(target)
+    except yara_fetch.FetchError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(2) from exc
+    typer.echo(f"rules at {target} (commit {yara_fetch.RULES_SHA[:12]})")
