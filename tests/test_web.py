@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from rehub import baseline, db, web
+from rehub import baseline, db, web, yara_ai
 
 
 @pytest.fixture
@@ -191,3 +191,125 @@ def test_responses_carry_security_headers(server: ThreadingHTTPServer) -> None:
         assert "default-src 'none'" in res.headers["Content-Security-Policy"]
         assert res.headers["X-Frame-Options"] == "DENY"
         assert res.headers["Cache-Control"] == "no-store"
+
+
+GOOD_RULE = 'rule Good { strings: $a = "P_PROGRAM" condition: $a }'
+
+
+class FakeProvider:
+    def __init__(self, hosted: bool, replies: list[str]) -> None:
+        self.hosted = hosted
+        self.name = "anthropic" if hosted else "ollama"
+        self.replies = replies
+        self.sent: list[str] = []
+
+    def complete(self, system: str, user: str) -> str:
+        self.sent.append(user)
+        return self.replies.pop(0) if len(self.replies) > 1 else self.replies[0]
+
+
+class FakeEngine:
+    def __init__(self, runner: object) -> None:
+        pass
+
+    def compile(self, rule: str) -> str | None:
+        return None if "condition:" in rule else "error: syntax"
+
+    def matches(self, rule: str, target: Path) -> list[str]:
+        if target.is_dir():
+            return []
+        return [target.name]
+
+
+def b64(text: bytes) -> str:
+    import base64
+
+    return base64.b64encode(text).decode()
+
+
+@pytest.fixture
+def draft_env(monkeypatch: pytest.MonkeyPatch) -> dict[str, FakeProvider]:
+    holder: dict[str, FakeProvider] = {}
+
+    def make(name: str, model: str | None) -> FakeProvider:
+        return holder["provider"]
+
+    monkeypatch.setattr(yara_ai, "make_provider", make)
+    monkeypatch.setattr(yara_ai, "RunnerEngine", FakeEngine)
+    return holder
+
+
+def draft_body(**extra: Any) -> dict[str, Any]:
+    body: dict[str, Any] = {
+        "description": "S7 PLC stop",
+        "positives": [{"filename": "stop.bin", "data": b64(b"SECRET-BYTES")}],
+        "benign": [{"filename": "ok.txt", "data": b64(b"fine")}],
+    }
+    body.update(extra)
+    return body
+
+
+def test_hosted_draft_asks_for_confirmation_and_sends_nothing(
+    server: ThreadingHTTPServer, draft_env: dict[str, FakeProvider]
+) -> None:
+    provider = FakeProvider(hosted=True, replies=[GOOD_RULE])
+    draft_env["provider"] = provider
+    status, body = call(server, "/api/yara/draft", "POST", draft_body(provider="anthropic"), POST)
+    assert status == 200
+    assert isinstance(body, dict)
+    assert body["needs_confirmation"] is True
+    assert body["provider"] == "anthropic"
+    assert "S7 PLC stop" in body["user"]
+    assert provider.sent == []
+
+
+def test_hosted_draft_runs_after_confirmation_without_leaking_samples(
+    server: ThreadingHTTPServer, draft_env: dict[str, FakeProvider]
+) -> None:
+    provider = FakeProvider(hosted=True, replies=["rule Bad {", GOOD_RULE])
+    draft_env["provider"] = provider
+    status, body = call(
+        server, "/api/yara/draft", "POST", draft_body(provider="anthropic", yes=True), POST
+    )
+    assert status == 200
+    assert isinstance(body, dict)
+    assert body["status"] == "validated"
+    assert body["attempts"] == 2
+    assert all("SECRET-BYTES" not in text for text in provider.sent)
+
+
+def test_local_draft_is_stored_with_its_status(
+    server: ThreadingHTTPServer, draft_env: dict[str, FakeProvider]
+) -> None:
+    draft_env["provider"] = FakeProvider(hosted=False, replies=["not a rule"])
+    status, body = call(server, "/api/yara/draft", "POST", draft_body(), POST)
+    assert status == 200
+    assert isinstance(body, dict)
+    assert body["status"] == "unvalidated"
+    assert body["reason"] == "does not compile"
+    status, state = call(server, "/api/state")
+    assert isinstance(state, dict)
+    assert state["rules"][0]["status"] == "unvalidated"
+
+
+def test_draft_input_validation(
+    server: ThreadingHTTPServer, draft_env: dict[str, FakeProvider]
+) -> None:
+    draft_env["provider"] = FakeProvider(hosted=False, replies=[GOOD_RULE])
+    assert call(server, "/api/yara/draft", "POST", {"description": " "}, POST)[0] == 400
+    bad = draft_body(positives=[{"filename": "x", "data": "***"}])
+    status, body = call(server, "/api/yara/draft", "POST", bad, POST)
+    assert status == 400
+    assert isinstance(body, dict)
+    assert "base64" in body["error"]
+
+
+def test_sample_listing_and_unknown_sample(server: ThreadingHTTPServer) -> None:
+    status, body = call(server, "/api/samples")
+    assert status == 200
+    assert isinstance(body, dict)
+    assert "plant_normal" in body["samples"]
+    status, err = call(server, "/api/analyze-sample", "POST", {"name": "../../etc/passwd"}, POST)
+    assert status == 400
+    assert isinstance(err, dict)
+    assert "unknown" in err["error"]

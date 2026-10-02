@@ -266,6 +266,7 @@ details.card[open] summary { margin-bottom: 12px; }
 .toolrow { display: grid; grid-template-columns: minmax(14ch, 22ch) 1fr 1fr 8ch; gap: 4px 12px; padding: 6px 0; border-bottom: 1px solid var(--line); font: 13px/1.4 var(--mono); }
 .toolrow:last-child { border-bottom: 0; }
 .toolrow .bad { color: var(--major); font-family: var(--head); font-weight: 700; }
+.stack { display: grid; gap: 4px; font: 500 14px/1.2 var(--head); color: var(--ink-2); }
 .matches { margin: 10px 0 0; padding: 0; list-style: none; font: 14px/1.6 var(--mono); }
 </style>
 <div class="app">
@@ -297,6 +298,9 @@ const state = {
   busy: null, error: null, notice: null,
   analysis: null, toolCheck: null, yara: null,
   baselineName: "", doctorImage: "", rules: "", ruleSample: null,
+  samples: [],
+  draftDesc: "", draftProvider: "ollama", draftModel: "", draftPositives: [], draftBenign: [],
+  draftResult: null, draftConfirm: null,
 };
 
 function h(tag, attrs, ...kids) {
@@ -342,6 +346,10 @@ async function refresh() {
   pickDefaults();
 }
 
+async function loadSamples() {
+  try { state.samples = (await api("/api/samples")).samples; } catch (e) { state.samples = []; }
+}
+
 async function act(message, fn) {
   state.busy = message; state.error = null; state.notice = null;
   render();
@@ -350,17 +358,30 @@ async function act(message, fn) {
   render();
 }
 
+async function finishAnalysis(result, label) {
+  state.analysis = result;
+  await refresh();
+  if (result.zeek_run_id != null) { state.run = result.zeek_run_id; state.trafficRun = result.zeek_run_id; }
+  state.view = "traffic";
+  state.notice = `Analyzed ${label}.`;
+}
+
 function analyzeFile(file) {
   return act(`Analyzing ${file.name} with Zeek, Suricata and tshark. This can take a minute.`, async () => {
     const result = await api("/api/analyze", {
       method: "POST", body: file,
       headers: { "Content-Type": "application/octet-stream", "X-Filename": encodeURIComponent(file.name) },
     });
-    state.analysis = result;
-    await refresh();
-    if (result.zeek_run_id != null) { state.run = result.zeek_run_id; state.trafficRun = result.zeek_run_id; }
-    state.view = "traffic";
-    state.notice = `Analyzed ${file.name}.`;
+    await finishAnalysis(result, file.name);
+  });
+}
+
+function analyzeSample(name) {
+  return act(`Analyzing the ${name} sample with Zeek, Suricata and tshark.`, async () => {
+    const result = await api("/api/analyze-sample", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }),
+    });
+    await finishAnalysis(result, `${name}.pcap`);
   });
 }
 
@@ -413,6 +434,25 @@ function scanYara() {
       body: JSON.stringify({ rules: state.rules, filename: file.name, data }),
     });
     state.yara = { file: file.name, matches: result.matches };
+  });
+}
+
+async function filesPayload(files) {
+  return Promise.all(files.map(async (f) => ({ filename: f.name, data: toBase64(await f.arrayBuffer()) })));
+}
+
+function draftRule(confirmed) {
+  if (!state.draftDesc.trim()) { state.error = "Describe what the rule should detect."; render(); return Promise.resolve(); }
+  return act("Drafting a rule, then compiling it and testing it against your samples.", async () => {
+    const body = {
+      description: state.draftDesc, provider: state.draftProvider, model: state.draftModel.trim(), yes: confirmed === true,
+      positives: await filesPayload(state.draftPositives), benign: await filesPayload(state.draftBenign),
+    };
+    const result = await api("/api/yara/draft", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    if (result.needs_confirmation) { state.draftConfirm = result; state.draftResult = null; return; }
+    state.draftConfirm = null;
+    state.draftResult = result;
+    await refresh();
   });
 }
 
@@ -566,7 +606,15 @@ function analysisCard() {
 function viewTraffic() {
   const runs = observedRuns();
   const parts = [h("h1", {}, "Traffic")];
-  if (LIVE) parts.push(h("p", { class: "lede" }, "Analyze a capture to see which hosts talk, over which protocol, and what engineering actions they perform."), dropZone(), h("div", { style: "height:16px" }), analysisCard());
+  if (LIVE) {
+    parts.push(h("p", { class: "lede" }, "Analyze a capture to see which hosts talk, over which protocol, and what engineering actions they perform."), dropZone());
+    if (state.samples.length) {
+      parts.push(h("div", { class: "row", style: "margin:12px 0 0; align-items:center" },
+        h("span", {}, "No capture handy? Try a bundled sample:"),
+        ...state.samples.map((n) => btn(n, () => analyzeSample(n), false))));
+    }
+    parts.push(h("div", { style: "height:16px" }), analysisCard());
+  }
   else parts.push(h("p", { class: "lede" }, "Host pairs, protocols and engineering actions seen in a capture. A plain connection shows only the protocol."));
   if (!runs.length) {
     if (!LIVE) parts.push(empty("No capture analyzed yet", h("p", {}, "Flows appear here after you analyze a capture."), h("p", {}, h("code", {}, "rehub analyze capture.pcap"))));
@@ -649,14 +697,68 @@ function yaraCard() {
       h("ul", { class: "matches" }, result.matches.map((m) => h("li", {}, m)))) : null);
 }
 
+function filePicker(label, stateKey) {
+  const chosen = state[stateKey];
+  return h("label", {}, label,
+    h("input", { type: "file", multiple: true, onchange: (e) => { state[stateKey] = [...e.target.files]; render(); } }),
+    h("span", { style: "font:12px var(--body); color:var(--ink-2)" }, chosen.length ? chosen.map((f) => f.name).join(", ") : "None chosen"));
+}
+
+function draftCard() {
+  const hosted = state.draftProvider === "anthropic";
+  const c = state.draftConfirm;
+  const r = state.draftResult;
+  return h("div", { class: "panel card" },
+    h("h3", {}, "Draft a rule with a model"),
+    h("p", {}, "The model sees your description and, if it asks for a fix, the rule and the compiler error. It never sees your sample files. The rule is then compiled and tested against the samples here."),
+    h("label", { class: "stack" }, "What should it detect?",
+      h("textarea", { style: "min-height:70px; font:14px/1.4 var(--body)", "aria-label": "Description", spellcheck: "true",
+        placeholder: "S7comm job request that stops the PLC",
+        oninput: (e) => { state.draftDesc = e.target.value; } }, state.draftDesc)),
+    h("div", { class: "row", style: "margin-top:10px" },
+      select("Model provider", [{ value: "ollama", label: "Local (Ollama)" }, { value: "anthropic", label: "Hosted (Anthropic)" }], state.draftProvider,
+        (v) => { state.draftProvider = v; state.draftConfirm = null; render(); }),
+      h("label", {}, "Model name",
+        h("input", { type: "text", placeholder: hosted ? "default: claude-sonnet-5-5" : "name of your Ollama model", value: state.draftModel,
+          oninput: (e) => { state.draftModel = e.target.value; } }))),
+    h("div", { class: "row", style: "margin-top:10px" },
+      filePicker("Samples it must match", "draftPositives"),
+      filePicker("Clean files it must not match", "draftBenign")),
+    hosted ? h("p", { style: "margin:12px 0 0" }, "A hosted model is a third party. You will see exactly what would be sent before anything leaves this computer.") : null,
+    h("div", { style: "margin-top:12px" }, btn("Draft rule", () => draftRule(false), true)),
+    c ? h("div", { class: "banner", style: "margin:16px 0 0" },
+      h("strong", {}, `Nothing has been sent yet. This text would go to ${c.provider}:`),
+      h("pre", { style: "margin-top:8px" }, c.user),
+      h("div", { class: "row", style: "margin-top:10px" },
+        btn(`Send to ${c.provider}`, () => draftRule(true), true),
+        btn("Cancel", () => { state.draftConfirm = null; render(); }, false))) : null,
+    r ? draftResult(r) : null);
+}
+
+function draftResult(r) {
+  const ok = r.status === "validated";
+  const lines = [`Compile attempts: ${r.attempts}`];
+  if (r.compile_error) lines.push(`Compiler error: ${r.compile_error}`);
+  for (const [name, matched] of Object.entries(r.positives)) lines.push(`${name}: ${matched ? "matched" : "missed"}`);
+  for (const name of r.benign_hits) lines.push(`${name}: matched, and it should not have`);
+  return h("div", { style: "margin-top:16px" },
+    h("div", { class: "row", style: "align-items:center" },
+      h("h3", { style: "margin:0" }, "Drafted rule"),
+      h("span", { class: `badge ${r.status}` }, ok ? "Validated" : "Unvalidated"),
+      r.reason ? h("span", {}, r.reason) : null),
+    h("pre", { style: "margin-top:8px" }, r.rule || "(no rule text)"),
+    h("ul", { class: "matches" }, lines.map((l) => h("li", {}, l))),
+    ok ? null : h("p", { style: "margin-top:10px" }, "A model wrote this rule and it did not pass every test. Review it before using it."));
+}
+
 function viewRules() {
   const parts = [h("h1", {}, "Rules")];
   parts.push(h("p", { class: "lede" }, "A rule is validated only when it compiled and matched every positive sample and no benign file. Unvalidated rules need a human review."));
-  if (LIVE) parts.push(yaraCard());
+  if (LIVE) parts.push(draftCard(), yaraCard());
   if (!DATA.rules.length) {
     parts.push(empty("No drafted rules yet",
       h("p", {}, "Rules written with a model are stored here with their test status."),
-      h("p", {}, h("code", {}, 'rehub yara draft "describe what to detect" --positive sample.bin --benign clean-dir'))));
+      LIVE ? null : h("p", {}, h("code", {}, 'rehub yara draft "describe what to detect" --positive sample.bin --benign clean-dir'))));
     return parts;
   }
   parts.push(...DATA.rules.map((r) => h("article", { class: "panel rule" },
@@ -719,6 +821,7 @@ async function init() {
         empty("The local server did not answer", h("p", {}, e.message), h("p", {}, "Start it again with ", h("code", {}, "rehub web"), ".")));
       return;
     }
+    await loadSamples();
     document.getElementById("meta").textContent = `Live on this computer. Tools run in ${DATA.image} with no network.`;
   } else {
     pickDefaults();

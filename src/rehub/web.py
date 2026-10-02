@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlparse
 
-from rehub import baseline, config, db, report
+from rehub import baseline, config, db, report, yara_ai
 from rehub.analyze import analyze as run_analysis
 from rehub.diff import summarize
 from rehub.doctor import FIXTURES_DIR, record_reports, run_doctor
@@ -158,6 +158,76 @@ class Api:
             conn.close()
         return {"name": name.strip(), "sha256": digest}
 
+    def samples(self) -> Json:
+        folder = FIXTURES_DIR / "scenarios"
+        names = sorted(p.stem for p in folder.glob("*.pcap")) if folder.is_dir() else []
+        return {"samples": names}
+
+    def analyze_sample(self, body: Json) -> Json:
+        name = body.get("name")
+        if not isinstance(name, str) or name not in self.samples()["samples"]:
+            raise ApiError("unknown sample capture")
+        return self.analyze(f"{name}.pcap", FIXTURES_DIR / "scenarios" / f"{name}.pcap")
+
+    def yara_draft(self, body: Json) -> Json:
+        description = body.get("description")
+        if not isinstance(description, str) or not description.strip():
+            raise ApiError("describe what the rule should detect")
+        try:
+            cfg = config.load()
+            name = body.get("provider") or cfg.provider
+            model = body.get("model") or cfg.model
+            provider = yara_ai.make_provider(str(name), str(model) if model else None)
+        except (yara_ai.ProviderError, config.ConfigError) as exc:
+            raise ApiError(str(exc)) from exc
+        if provider.hosted and body.get("yes") is not True:
+            return {
+                "needs_confirmation": True,
+                "provider": provider.name,
+                "system": yara_ai.DRAFT_SYSTEM,
+                "user": yara_ai.draft_prompt(description.strip()),
+            }
+        sent: list[str] = []
+
+        def on_send(system: str, user: str) -> None:
+            sent.append(user)
+
+        with tempfile.TemporaryDirectory(prefix="rehub-draft-") as tmp:
+            root = Path(tmp)
+            (root / "positive").mkdir()
+            (root / "benign").mkdir()
+            positives = _decode_files(body.get("positives"), root / "positive", "positive")
+            benign = _decode_files(body.get("benign"), root / "benign", "benign")
+            try:
+                result = yara_ai.draft(
+                    provider,
+                    yara_ai.RunnerEngine(self._runner()),
+                    description.strip(),
+                    positives,
+                    root / "benign" if benign else None,
+                    on_send,
+                )
+            except yara_ai.ProviderError as exc:
+                raise ApiError(str(exc), 502) from exc
+            except RunnerError as exc:
+                raise ApiError(str(exc), 502) from exc
+        conn = db.connect()
+        try:
+            db.record_yara_rule(conn, yara_ai.rule_name(result.rule), result.rule, result.status)
+        finally:
+            conn.close()
+        return {
+            "provider": provider.name,
+            "rule": result.rule,
+            "status": result.status,
+            "reason": result.reason,
+            "attempts": result.attempts,
+            "compile_error": result.compile_error,
+            "positives": result.positives,
+            "benign_hits": result.benign_hits,
+            "requests_sent": len(sent),
+        }
+
     def yara_scan(self, body: Json) -> Json:
         rules, data, filename = body.get("rules"), body.get("data"), body.get("filename")
         if not isinstance(rules, str) or not rules.strip() or not isinstance(data, str):
@@ -181,6 +251,28 @@ class Api:
             except RunnerError as exc:
                 raise ApiError(str(exc), 422) from exc
         return {"matches": sorted({m["rule"] for m in found})}
+
+
+def _decode_files(items: object, directory: Path, label: str) -> list[Path]:
+    if items in (None, []):
+        return []
+    if not isinstance(items, list):
+        raise ApiError(f"{label} must be a list of files")
+    paths = []
+    for index, item in enumerate(items):
+        if not isinstance(item, dict) or not isinstance(item.get("data"), str):
+            raise ApiError(f"{label} file {index + 1} is not valid")
+        try:
+            blob = base64.b64decode(item["data"], validate=True)
+        except binascii.Error as exc:
+            raise ApiError(f"{label} file {index + 1} is not valid base64") from exc
+        name = Path(str(item.get("filename") or f"{label}-{index + 1}")).name
+        path = directory / name
+        if path.exists():
+            path = directory / f"{index + 1}-{name}"
+        path.write_bytes(blob)
+        paths.append(path)
+    return paths
 
 
 def _store_upload(handler: BaseHTTPRequestHandler) -> tuple[str, Path]:
@@ -277,6 +369,8 @@ class Handler(BaseHTTPRequestHandler):
             self._dispatch(self.api.state)
         elif path == "/api/tools":
             self._dispatch(self.api.tools)
+        elif path == "/api/samples":
+            self._dispatch(self.api.samples)
         else:
             self._json(404, {"error": "not found"})
 
@@ -292,6 +386,10 @@ class Handler(BaseHTTPRequestHandler):
             self._dispatch(lambda: self.api.save_baseline(self._read_json()))
         elif path == "/api/yara/scan":
             self._dispatch(lambda: self.api.yara_scan(self._read_json()))
+        elif path == "/api/yara/draft":
+            self._dispatch(lambda: self.api.yara_draft(self._read_json()))
+        elif path == "/api/analyze-sample":
+            self._dispatch(lambda: self.api.analyze_sample(self._read_json()))
         else:
             self._json(404, {"error": "not found"})
 
