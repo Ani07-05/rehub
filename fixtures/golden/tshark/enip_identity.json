@@ -1,0 +1,114 @@
+{
+  "logs": {
+    "packets": [
+      {
+        "_ws.col.info": "51000 \u2192 44818 [SYN] Seq=0 Win=8192 Len=0",
+        "_ws.col.protocol": "TCP",
+        "frame.number": "1",
+        "ip.dst": "10.0.0.22",
+        "ip.src": "10.0.0.12",
+        "tcp.dstport": "44818",
+        "tcp.srcport": "51000"
+      },
+      {
+        "_ws.col.info": "44818 \u2192 51000 [SYN, ACK] Seq=0 Ack=1 Win=8192 Len=0",
+        "_ws.col.protocol": "TCP",
+        "frame.number": "2",
+        "ip.dst": "10.0.0.12",
+        "ip.src": "10.0.0.22",
+        "tcp.dstport": "51000",
+        "tcp.srcport": "44818"
+      },
+      {
+        "_ws.col.info": "51000 \u2192 44818 [ACK] Seq=1 Ack=1 Win=8192 Len=0",
+        "_ws.col.protocol": "TCP",
+        "frame.number": "3",
+        "ip.dst": "10.0.0.22",
+        "ip.src": "10.0.0.12",
+        "tcp.dstport": "44818",
+        "tcp.srcport": "51000"
+      },
+      {
+        "_ws.col.info": "List Identity (Req)",
+        "_ws.col.protocol": "ENIP",
+        "frame.number": "4",
+        "ip.dst": "10.0.0.22",
+        "ip.src": "10.0.0.12",
+        "tcp.dstport": "44818",
+        "tcp.srcport": "51000"
+      },
+      {
+        "_ws.col.info": "List Identity (Rsp), 1756-L83E",
+        "_ws.col.protocol": "ENIP",
+        "frame.number": "5",
+        "ip.dst": "10.0.0.12",
+        "ip.src": "10.0.0.22",
+        "tcp.dstport": "51000",
+        "tcp.srcport": "44818"
+      },
+      {
+        "_ws.col.info": "Register Session (Req), Session: 0x00000000",
+        "_ws.col.protocol": "ENIP",
+        "frame.number": "6",
+        "ip.dst": "10.0.0.22",
+        "ip.src": "10.0.0.12",
+        "tcp.dstport": "44818",
+        "tcp.srcport": "51000"
+      },
+      {
+        "_ws.col.info": "Register Session (Rsp), Session: 0x1A2B3C4D",
+        "_ws.col.protocol": "ENIP",
+        "frame.number": "7",
+        "ip.dst": "10.0.0.12",
+        "ip.src": "10.0.0.22",
+        "tcp.dstport": "51000",
+        "tcp.srcport": "44818"
+      },
+      {
+        "_ws.col.info": "Identity - Get Attributes All",
+        "_ws.col.protocol": "CIP",
+        "frame.number": "8",
+        "ip.dst": "10.0.0.22",
+        "ip.src": "10.0.0.12",
+        "tcp.dstport": "44818",
+        "tcp.srcport": "51000"
+      },
+      {
+        "_ws.col.info": "Success: Identity - Get Attributes All",
+        "_ws.col.protocol": "CIP",
+        "frame.number": "9",
+        "ip.dst": "10.0.0.12",
+        "ip.src": "10.0.0.22",
+        "tcp.dstport": "51000",
+        "tcp.srcport": "44818"
+      },
+      {
+        "_ws.col.info": "51000 \u2192 44818 [FIN, ACK] Seq=99 Ack=170 Win=8192 Len=0",
+        "_ws.col.protocol": "TCP",
+        "frame.number": "10",
+        "ip.dst": "10.0.0.22",
+        "ip.src": "10.0.0.12",
+        "tcp.dstport": "44818",
+        "tcp.srcport": "51000"
+      },
+      {
+        "_ws.col.info": "44818 \u2192 51000 [FIN, ACK] Seq=170 Ack=100 Win=8192 Len=0",
+        "_ws.col.protocol": "TCP",
+        "frame.number": "11",
+        "ip.dst": "10.0.0.12",
+        "ip.src": "10.0.0.22",
+        "tcp.dstport": "51000",
+        "tcp.srcport": "44818"
+      },
+      {
+        "_ws.col.info": "51000 \u2192 44818 [ACK] Seq=100 Ack=171 Win=8192 Len=0",
+        "_ws.col.protocol": "TCP",
+        "frame.number": "12",
+        "ip.dst": "10.0.0.22",
+        "ip.src": "10.0.0.12",
+        "tcp.dstport": "44818",
+        "tcp.srcport": "51000"
+      }
+    ]
+  }
+}

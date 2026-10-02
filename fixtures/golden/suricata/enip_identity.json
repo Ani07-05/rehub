@@ -1,0 +1,146 @@
+{
+  "logs": {
+    "alert": [
+      {
+        "alert": {
+          "action": "allowed",
+          "category": "",
+          "gid": 1,
+          "rev": 1,
+          "severity": 3,
+          "signature": "REHUB ENIP list identity",
+          "signature_id": 9000005
+        },
+        "app_proto": "enip",
+        "dest_ip": "10.0.0.12",
+        "dest_port": 51000,
+        "direction": "to_client",
+        "enip": {
+          "request": {
+            "command": "list_identity",
+            "status": "success"
+          },
+          "response": {
+            "command": "list_identity",
+            "identity": {
+              "device_type": "Programmable Logic Controller",
+              "product_code": 166,
+              "product_name": "1756-L83E",
+              "protocol_version": 1,
+              "revision": "32.11",
+              "serial": 12648430,
+              "state": 3,
+              "status": 48,
+              "vendor_id": "Rockwell Automation/Allen-Bradley"
+            },
+            "status": "success"
+          }
+        },
+        "event_type": "alert",
+        "flow": {
+          "bytes_toclient": 263,
+          "bytes_toserver": 268,
+          "dest_ip": "10.0.0.22",
+          "dest_port": 44818,
+          "pkts_toclient": 3,
+          "pkts_toserver": 4,
+          "src_ip": "10.0.0.12",
+          "src_port": 51000
+        },
+        "ip_v": 4,
+        "pkt_src": "wire/pcap",
+        "proto": "TCP",
+        "src_ip": "10.0.0.22",
+        "src_port": 44818,
+        "tx_id": 0
+      },
+      {
+        "alert": {
+          "action": "allowed",
+          "category": "",
+          "gid": 1,
+          "rev": 1,
+          "severity": 3,
+          "signature": "REHUB ENIP list identity",
+          "signature_id": 9000005
+        },
+        "app_proto": "enip",
+        "dest_ip": "10.0.0.22",
+        "dest_port": 44818,
+        "direction": "to_server",
+        "enip": {
+          "request": {
+            "command": "list_identity",
+            "status": "success"
+          },
+          "response": {
+            "command": "list_identity",
+            "identity": {
+              "device_type": "Programmable Logic Controller",
+              "product_code": 166,
+              "product_name": "1756-L83E",
+              "protocol_version": 1,
+              "revision": "32.11",
+              "serial": 12648430,
+              "state": 3,
+              "status": 48,
+              "vendor_id": "Rockwell Automation/Allen-Bradley"
+            },
+            "status": "success"
+          }
+        },
+        "event_type": "alert",
+        "flow": {
+          "bytes_toclient": 181,
+          "bytes_toserver": 268,
+          "dest_ip": "10.0.0.22",
+          "dest_port": 44818,
+          "pkts_toclient": 2,
+          "pkts_toserver": 4,
+          "src_ip": "10.0.0.12",
+          "src_port": 51000
+        },
+        "ip_v": 4,
+        "pkt_src": "wire/pcap",
+        "proto": "TCP",
+        "src_ip": "10.0.0.12",
+        "src_port": 51000,
+        "tx_id": 0
+      }
+    ],
+    "flow": [
+      {
+        "app_proto": "enip",
+        "dest_ip": "10.0.0.22",
+        "dest_port": 44818,
+        "event_type": "flow",
+        "flow": {
+          "alerted": true,
+          "bytes_toclient": 439,
+          "bytes_toserver": 476,
+          "pkts_toclient": 5,
+          "pkts_toserver": 7,
+          "reason": "shutdown",
+          "state": "closed",
+          "tx_cnt": 3
+        },
+        "ip_v": 4,
+        "proto": "TCP",
+        "src_ip": "10.0.0.12",
+        "src_port": 51000,
+        "tcp": {
+          "ack": true,
+          "fin": true,
+          "psh": true,
+          "state": "closed",
+          "syn": true,
+          "tc_max_regions": 1,
+          "tcp_flags": "1b",
+          "tcp_flags_tc": "1b",
+          "tcp_flags_ts": "1b",
+          "ts_max_regions": 1
+        }
+      }
+    ]
+  }
+}

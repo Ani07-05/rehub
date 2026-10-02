@@ -1,0 +1,114 @@
+{
+  "logs": {
+    "packets": [
+      {
+        "_ws.col.info": "50000 \u2192 502 [SYN] Seq=0 Win=8192 Len=0",
+        "_ws.col.protocol": "TCP",
+        "frame.number": "1",
+        "ip.dst": "10.0.0.21",
+        "ip.src": "10.0.0.11",
+        "tcp.dstport": "502",
+        "tcp.srcport": "50000"
+      },
+      {
+        "_ws.col.info": "502 \u2192 50000 [SYN, ACK] Seq=0 Ack=1 Win=8192 Len=0",
+        "_ws.col.protocol": "TCP",
+        "frame.number": "2",
+        "ip.dst": "10.0.0.11",
+        "ip.src": "10.0.0.21",
+        "tcp.dstport": "50000",
+        "tcp.srcport": "502"
+      },
+      {
+        "_ws.col.info": "50000 \u2192 502 [ACK] Seq=1 Ack=1 Win=8192 Len=0",
+        "_ws.col.protocol": "TCP",
+        "frame.number": "3",
+        "ip.dst": "10.0.0.21",
+        "ip.src": "10.0.0.11",
+        "tcp.dstport": "502",
+        "tcp.srcport": "50000"
+      },
+      {
+        "_ws.col.info": "   Query: Trans:     1; Unit:   1, Func:   3: Read Holding Registers",
+        "_ws.col.protocol": "Modbus/TCP",
+        "frame.number": "4",
+        "ip.dst": "10.0.0.21",
+        "ip.src": "10.0.0.11",
+        "tcp.dstport": "502",
+        "tcp.srcport": "50000"
+      },
+      {
+        "_ws.col.info": "Response: Trans:     1; Unit:   1, Func:   3: Read Holding Registers",
+        "_ws.col.protocol": "Modbus/TCP",
+        "frame.number": "5",
+        "ip.dst": "10.0.0.11",
+        "ip.src": "10.0.0.21",
+        "tcp.dstport": "50000",
+        "tcp.srcport": "502"
+      },
+      {
+        "_ws.col.info": "   Query: Trans:     2; Unit:   1, Func:   6: Write Single Register",
+        "_ws.col.protocol": "Modbus/TCP",
+        "frame.number": "6",
+        "ip.dst": "10.0.0.21",
+        "ip.src": "10.0.0.11",
+        "tcp.dstport": "502",
+        "tcp.srcport": "50000"
+      },
+      {
+        "_ws.col.info": "Response: Trans:     2; Unit:   1, Func:   6: Write Single Register",
+        "_ws.col.protocol": "Modbus/TCP",
+        "frame.number": "7",
+        "ip.dst": "10.0.0.11",
+        "ip.src": "10.0.0.21",
+        "tcp.dstport": "50000",
+        "tcp.srcport": "502"
+      },
+      {
+        "_ws.col.info": "   Query: Trans:     3; Unit:   1, Func:  16: Write Multiple Registers",
+        "_ws.col.protocol": "Modbus/TCP",
+        "frame.number": "8",
+        "ip.dst": "10.0.0.21",
+        "ip.src": "10.0.0.11",
+        "tcp.dstport": "502",
+        "tcp.srcport": "50000"
+      },
+      {
+        "_ws.col.info": "Response: Trans:     3; Unit:   1, Func:  16: Write Multiple Registers",
+        "_ws.col.protocol": "Modbus/TCP",
+        "frame.number": "9",
+        "ip.dst": "10.0.0.11",
+        "ip.src": "10.0.0.21",
+        "tcp.dstport": "50000",
+        "tcp.srcport": "502"
+      },
+      {
+        "_ws.col.info": "50000 \u2192 502 [FIN, ACK] Seq=42 Ack=54 Win=8192 Len=0",
+        "_ws.col.protocol": "TCP",
+        "frame.number": "10",
+        "ip.dst": "10.0.0.21",
+        "ip.src": "10.0.0.11",
+        "tcp.dstport": "502",
+        "tcp.srcport": "50000"
+      },
+      {
+        "_ws.col.info": "502 \u2192 50000 [FIN, ACK] Seq=54 Ack=43 Win=8192 Len=0",
+        "_ws.col.protocol": "TCP",
+        "frame.number": "11",
+        "ip.dst": "10.0.0.11",
+        "ip.src": "10.0.0.21",
+        "tcp.dstport": "50000",
+        "tcp.srcport": "502"
+      },
+      {
+        "_ws.col.info": "50000 \u2192 502 [ACK] Seq=43 Ack=55 Win=8192 Len=0",
+        "_ws.col.protocol": "TCP",
+        "frame.number": "12",
+        "ip.dst": "10.0.0.21",
+        "ip.src": "10.0.0.11",
+        "tcp.dstport": "502",
+        "tcp.srcport": "50000"
+      }
+    ]
+  }
+}

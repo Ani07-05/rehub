@@ -1,0 +1,168 @@
+{
+  "logs": {
+    "packets": [
+      {
+        "_ws.col.info": "49152 \u2192 102 [SYN] Seq=0 Win=8192 Len=0",
+        "_ws.col.protocol": "TCP",
+        "frame.number": "1",
+        "ip.dst": "10.0.0.20",
+        "ip.src": "10.0.0.10",
+        "tcp.dstport": "102",
+        "tcp.srcport": "49152"
+      },
+      {
+        "_ws.col.info": "102 \u2192 49152 [SYN, ACK] Seq=0 Ack=1 Win=8192 Len=0",
+        "_ws.col.protocol": "TCP",
+        "frame.number": "2",
+        "ip.dst": "10.0.0.10",
+        "ip.src": "10.0.0.20",
+        "tcp.dstport": "49152",
+        "tcp.srcport": "102"
+      },
+      {
+        "_ws.col.info": "49152 \u2192 102 [ACK] Seq=1 Ack=1 Win=8192 Len=0",
+        "_ws.col.protocol": "TCP",
+        "frame.number": "3",
+        "ip.dst": "10.0.0.20",
+        "ip.src": "10.0.0.10",
+        "tcp.dstport": "102",
+        "tcp.srcport": "49152"
+      },
+      {
+        "_ws.col.info": "CR TPDU src-ref: 0x0001 dst-ref: 0x0000",
+        "_ws.col.protocol": "COTP",
+        "frame.number": "4",
+        "ip.dst": "10.0.0.20",
+        "ip.src": "10.0.0.10",
+        "tcp.dstport": "102",
+        "tcp.srcport": "49152"
+      },
+      {
+        "_ws.col.info": "CC TPDU src-ref: 0x0001 dst-ref: 0x0001",
+        "_ws.col.protocol": "COTP",
+        "frame.number": "5",
+        "ip.dst": "10.0.0.10",
+        "ip.src": "10.0.0.20",
+        "tcp.dstport": "49152",
+        "tcp.srcport": "102"
+      },
+      {
+        "_ws.col.info": "ROSCTR:[Job     ] Function:[Setup communication]",
+        "_ws.col.protocol": "S7COMM",
+        "frame.number": "6",
+        "ip.dst": "10.0.0.20",
+        "ip.src": "10.0.0.10",
+        "tcp.dstport": "102",
+        "tcp.srcport": "49152"
+      },
+      {
+        "_ws.col.info": "ROSCTR:[Ack_Data] Function:[Setup communication]",
+        "_ws.col.protocol": "S7COMM",
+        "frame.number": "7",
+        "ip.dst": "10.0.0.10",
+        "ip.src": "10.0.0.20",
+        "tcp.dstport": "49152",
+        "tcp.srcport": "102"
+      },
+      {
+        "_ws.col.info": "ROSCTR:[Job     ] Function:[Request download] -> Block:[DB1][Malformed Packet]",
+        "_ws.col.protocol": "S7COMM",
+        "frame.number": "8",
+        "ip.dst": "10.0.0.20",
+        "ip.src": "10.0.0.10",
+        "tcp.dstport": "102",
+        "tcp.srcport": "49152"
+      },
+      {
+        "_ws.col.info": "ROSCTR:[Ack_Data] Function:[Request download]",
+        "_ws.col.protocol": "S7COMM",
+        "frame.number": "9",
+        "ip.dst": "10.0.0.10",
+        "ip.src": "10.0.0.20",
+        "tcp.dstport": "49152",
+        "tcp.srcport": "102"
+      },
+      {
+        "_ws.col.info": "ROSCTR:[Job     ] Function:[Download block] -> Block:[DB1]",
+        "_ws.col.protocol": "S7COMM",
+        "frame.number": "10",
+        "ip.dst": "10.0.0.20",
+        "ip.src": "10.0.0.10",
+        "tcp.dstport": "102",
+        "tcp.srcport": "49152"
+      },
+      {
+        "_ws.col.info": "ROSCTR:[Ack_Data] Function:[Download block]",
+        "_ws.col.protocol": "S7COMM",
+        "frame.number": "11",
+        "ip.dst": "10.0.0.10",
+        "ip.src": "10.0.0.20",
+        "tcp.dstport": "49152",
+        "tcp.srcport": "102"
+      },
+      {
+        "_ws.col.info": "ROSCTR:[Job     ] Function:[Download ended] -> Block:[DB1]",
+        "_ws.col.protocol": "S7COMM",
+        "frame.number": "12",
+        "ip.dst": "10.0.0.20",
+        "ip.src": "10.0.0.10",
+        "tcp.dstport": "102",
+        "tcp.srcport": "49152"
+      },
+      {
+        "_ws.col.info": "ROSCTR:[Ack_Data] Function:[Download ended]",
+        "_ws.col.protocol": "S7COMM",
+        "frame.number": "13",
+        "ip.dst": "10.0.0.10",
+        "ip.src": "10.0.0.20",
+        "tcp.dstport": "49152",
+        "tcp.srcport": "102"
+      },
+      {
+        "_ws.col.info": "ROSCTR:[Job     ] Function:[PLC Stop]",
+        "_ws.col.protocol": "S7COMM",
+        "frame.number": "14",
+        "ip.dst": "10.0.0.20",
+        "ip.src": "10.0.0.10",
+        "tcp.dstport": "102",
+        "tcp.srcport": "49152"
+      },
+      {
+        "_ws.col.info": "ROSCTR:[Ack_Data] Function:[PLC Stop]",
+        "_ws.col.protocol": "S7COMM",
+        "frame.number": "15",
+        "ip.dst": "10.0.0.10",
+        "ip.src": "10.0.0.20",
+        "tcp.dstport": "49152",
+        "tcp.srcport": "102"
+      },
+      {
+        "_ws.col.info": "49152 \u2192 102 [FIN, ACK] Seq=201 Ack=135 Win=8192 Len=0",
+        "_ws.col.protocol": "TCP",
+        "frame.number": "16",
+        "ip.dst": "10.0.0.20",
+        "ip.src": "10.0.0.10",
+        "tcp.dstport": "102",
+        "tcp.srcport": "49152"
+      },
+      {
+        "_ws.col.info": "102 \u2192 49152 [FIN, ACK] Seq=135 Ack=202 Win=8192 Len=0",
+        "_ws.col.protocol": "TCP",
+        "frame.number": "17",
+        "ip.dst": "10.0.0.10",
+        "ip.src": "10.0.0.20",
+        "tcp.dstport": "49152",
+        "tcp.srcport": "102"
+      },
+      {
+        "_ws.col.info": "49152 \u2192 102 [ACK] Seq=202 Ack=136 Win=8192 Len=0",
+        "_ws.col.protocol": "TCP",
+        "frame.number": "18",
+        "ip.dst": "10.0.0.20",
+        "ip.src": "10.0.0.10",
+        "tcp.dstport": "102",
+        "tcp.srcport": "49152"
+      }
+    ]
+  }
+}

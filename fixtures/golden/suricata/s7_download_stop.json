@@ -1,0 +1,101 @@
+{
+  "logs": {
+    "alert": [
+      {
+        "alert": {
+          "action": "allowed",
+          "category": "",
+          "gid": 1,
+          "rev": 1,
+          "severity": 3,
+          "signature": "REHUB S7comm PLC stop",
+          "signature_id": 9000003
+        },
+        "app_proto": "failed",
+        "dest_ip": "10.0.0.20",
+        "dest_port": 102,
+        "direction": "to_server",
+        "event_type": "alert",
+        "flow": {
+          "bytes_toclient": 438,
+          "bytes_toserver": 632,
+          "dest_ip": "10.0.0.20",
+          "dest_port": 102,
+          "pkts_toclient": 6,
+          "pkts_toserver": 8,
+          "src_ip": "10.0.0.10",
+          "src_port": 49152
+        },
+        "ip_v": 4,
+        "pkt_src": "wire/pcap",
+        "proto": "TCP",
+        "src_ip": "10.0.0.10",
+        "src_port": 49152
+      },
+      {
+        "alert": {
+          "action": "allowed",
+          "category": "",
+          "gid": 1,
+          "rev": 1,
+          "severity": 3,
+          "signature": "REHUB S7comm request download",
+          "signature_id": 9000004
+        },
+        "app_proto": "failed",
+        "dest_ip": "10.0.0.20",
+        "dest_port": 102,
+        "direction": "to_server",
+        "event_type": "alert",
+        "flow": {
+          "bytes_toclient": 211,
+          "bytes_toserver": 359,
+          "dest_ip": "10.0.0.20",
+          "dest_port": 102,
+          "pkts_toclient": 3,
+          "pkts_toserver": 5,
+          "src_ip": "10.0.0.10",
+          "src_port": 49152
+        },
+        "ip_v": 4,
+        "pkt_src": "wire/pcap",
+        "proto": "TCP",
+        "src_ip": "10.0.0.10",
+        "src_port": 49152
+      }
+    ],
+    "flow": [
+      {
+        "app_proto": "failed",
+        "dest_ip": "10.0.0.20",
+        "dest_port": 102,
+        "event_type": "flow",
+        "flow": {
+          "alerted": true,
+          "bytes_toclient": 566,
+          "bytes_toserver": 740,
+          "pkts_toclient": 8,
+          "pkts_toserver": 10,
+          "reason": "shutdown",
+          "state": "closed"
+        },
+        "ip_v": 4,
+        "proto": "TCP",
+        "src_ip": "10.0.0.10",
+        "src_port": 49152,
+        "tcp": {
+          "ack": true,
+          "fin": true,
+          "psh": true,
+          "state": "closed",
+          "syn": true,
+          "tc_max_regions": 1,
+          "tcp_flags": "1b",
+          "tcp_flags_tc": "1b",
+          "tcp_flags_ts": "1b",
+          "ts_max_regions": 1
+        }
+      }
+    ]
+  }
+}
