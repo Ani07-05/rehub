@@ -1,10 +1,12 @@
 import json
+import sqlite3
 import tempfile
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from rehub import db
 from rehub.diff import Diff, diff_normalized
 from rehub.runner import Runner
 from rehub.tools import Tool
@@ -71,3 +73,12 @@ def run_doctor(
     tools: Sequence[Tool], runner: Runner, fixtures: Path = FIXTURES_DIR, accept: bool = False
 ) -> list[ToolReport]:
     return [check_tool(t, runner, fixtures, accept) for t in tools]
+
+
+def record_reports(conn: sqlite3.Connection, reports: Sequence[ToolReport], image: str) -> None:
+    for report in reports:
+        db.record_tool_version(conn, report.tool, report.version)
+        for result in report.results:
+            db.record_doctor_run(
+                conn, report.tool, report.version, image, result.fixture, result.status, result.diff
+            )

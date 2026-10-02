@@ -23,7 +23,8 @@ not replace any of them.
 - **Model-written YARA rules are untrusted.** A rule is marked `validated` only when it compiles
   and matches every sample you give it and no benign file you give it. That is a test of your
   samples, not a guarantee of detection quality.
-- **Single analyst, local only.** No web UI, no dashboards, no multi-user mode, no live PLC
+- **Single analyst, local only.** No live web server (the report is a static file), no
+  multi-user mode, no live PLC
   access, no compliance claims.
 - **Needs Docker.** The pinned tools run inside one image. The host runs only `rehub`.
 
@@ -34,7 +35,9 @@ not replace any of them.
 2. **`rehub doctor`.** Replays bundled synthetic fixtures through every wrapped tool, normalizes
    the output, compares it to committed golden files, and names what changed. Run it against a
    candidate image before you switch sensors to it.
-3. **One memory.** Runs, tool versions and baselines live in one local SQLite file, so
+3. **A report you can open.** `rehub report` writes one offline HTML page: baseline changes drawn
+   as ladder rungs, doctor results, stored runs and drafted rules.
+4. **One memory.** Runs, tool versions and baselines live in one local SQLite file, so
    "is this new?" has an answer. Baselines are immutable.
 
 ## Quick start

@@ -7,10 +7,11 @@ import typer
 from rehub import baseline as baselines
 from rehub import capture as packet_capture
 from rehub import config, db, yara_ai, yara_fetch
+from rehub import report as report_page
 from rehub.analyze import analyze as run_analysis
 from rehub.config import DEFAULT_IMAGE
 from rehub.diff import summarize
-from rehub.doctor import FIXTURES_DIR, run_doctor
+from rehub.doctor import FIXTURES_DIR, record_reports, run_doctor
 from rehub.runner import RunnerError, default_runner
 from rehub.tools import Tool, suricata, tshark, yara, zeek
 
@@ -90,20 +91,15 @@ def doctor(
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(2) from exc
 
-    conn = db.connect()
+    record_reports(db.connect(), reports, image or config.load().image)
     failed = False
     for report in reports:
-        db.record_tool_version(conn, report.tool, report.version)
         typer.echo(f"{report.tool} {report.version}: {'PASS' if report.passed else 'FAIL'}")
         for component, pinned in report.pinned.items():
             have = report.installed.get(component, "missing")
             if have != pinned:
                 typer.echo(f"  version: {component} {have} (pinned {pinned})")
         for result in report.results:
-            db.record_doctor_run(
-                conn, report.tool, report.version, image or config.load().image,
-                result.fixture, result.status, result.diff,
-            )  # fmt: skip
             typer.echo(f"  {result.fixture}: {result.status}")
             for line in summarize(result.diff):
                 typer.echo(f"    {line}")
@@ -330,3 +326,21 @@ def capture(
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(2) from exc
     typer.echo(f"wrote {out}")
+
+
+@app.command()
+def report(
+    out: Path = typer.Option(
+        None, "--out", help="HTML file to write (default $REHUB_HOME/report.html)."
+    ),
+) -> None:
+    """Write a read only HTML report of stored runs, baselines and doctor results."""
+    target = out or db.home() / "report.html"
+    conn = db.connect()
+    try:
+        html = report_page.render(report_page.snapshot(conn))
+    finally:
+        conn.close()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(html)
+    typer.echo(f"wrote {target}")

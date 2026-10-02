@@ -85,6 +85,22 @@ Passive tcpdump for a fixed time. `--iface` is required and must be one named in
 `any`). `--seconds` is 1 to 86400. The output file must not exist. It prints that rehub only
 listens. Needs tcpdump and capture privileges, see [install.md](install.md).
 
+## report
+
+```sh
+rehub report [--out FILE.html]
+```
+
+Writes one self-contained HTML file (default `$REHUB_HOME/report.html`) from the stored runs,
+baselines, doctor results and drafted rules. Open it in a browser. It is a read only snapshot:
+no server, no network, no external fonts or scripts, and it does not change the database.
+
+Views: **Changes** (a baseline against a capture, drawn as ladder rungs: red for a new host
+pair, amber for a new action, dashed for a pair not seen), **Traffic** (everything seen in one
+capture), **Doctor** (latest result per tool and fixture) and **Rules** (drafted YARA rules with
+their status). The alarm row at the top lights only when something differs. Normal states stay
+gray. Regenerate the file after new runs. Dark and light themes follow the system setting.
+
 ## baseline
 
 ```sh
