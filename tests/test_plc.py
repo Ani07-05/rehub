@@ -31,6 +31,8 @@ def test_clean_program_has_no_findings() -> None:
     ("line", "rule"),
     [
         ('AdminPassword := "hunter2";', "hardcoded-secret"),
+        ("AdminPassword : STRING := 'hunter2';", "hardcoded-secret"),
+        ("ApiKey : STRING[20] := 'abc123';", "hardcoded-secret"),
         ("STP();", "cpu-stop"),
         ("ForceOutput := TRUE;", "force-override"),
         ("SafetyInterlock := FALSE;", "interlock-off"),
@@ -42,6 +44,10 @@ def test_clean_program_has_no_findings() -> None:
 )
 def test_each_rule_fires(line: str, rule: str) -> None:
     assert rule in ids(plc.analyze(f"PROGRAM P\n{line}\nEND_PROGRAM\n"))
+
+
+def test_empty_secret_variables_are_not_flagged() -> None:
+    assert plc.analyze("Password : STRING;\nPasswordOk := TRUE;\n") == []
 
 
 def test_comments_are_ignored() -> None:
@@ -118,3 +124,20 @@ def test_approved_programs_are_versioned_and_immutable(conn: sqlite3.Connection)
             conn.execute(sql)
     assert db.latest_plc_program(conn, "missing") is None
     assert len(db.list_plc_programs(conn)) == 2
+
+
+def test_bundled_sample_programs_show_the_demo_story() -> None:
+    root = Path(__file__).resolve().parents[1] / "fixtures" / "plc"
+    approved = (root / "boiler_approved.st").read_text()
+    updated = (root / "boiler_updated.st").read_text()
+    assert plc.analyze(approved) == []
+    result = plc.compare(approved, updated)
+    assert [(v.before, v.after) for v in result.value_changes] == [
+        ("Setpoint : INT := 80;", "Setpoint : INT := 120;")
+    ]
+    assert ids(result.new_findings) == {"hardcoded-secret", "network-call", "interlock-off"}
+
+
+def test_call_with_address_is_one_finding() -> None:
+    found = plc.analyze("TCON(REQ := TRUE, ADDR := '10.9.8.7');")
+    assert ids(found) == {"network-call"}

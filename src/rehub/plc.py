@@ -32,7 +32,8 @@ RULES = [
         "high",
         "A password or key is written into the program",
         _rx(
-            r"\b\w*(pass(word|wd)?|pwd|secret|token|api_?key|credential)\w*\s*:?=\s*['\"][^'\"]+['\"]"
+            r"\b\w*(pass(word|wd)?|pwd|secret|token|api_?key|credential)\w*"
+            r"\s*(?::\s*\w+(?:\[[^\]]*\])?\s*)?:?=\s*['\"][^'\"]+['\"]"
         ),
         "Anyone who can read or copy the program can read this value.",
         "Remove it from the code, change the real password, and keep secrets in a protected place.",
