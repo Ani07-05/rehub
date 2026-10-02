@@ -7,11 +7,11 @@ from rehub import db
 from rehub.diff import summarize
 from rehub.doctor import FIXTURES_DIR, run_doctor
 from rehub.runner import DEFAULT_IMAGE, RunnerError, default_runner
-from rehub.tools import Tool, zeek
+from rehub.tools import Tool, suricata, tshark, zeek
 
 app = typer.Typer(no_args_is_help=True, add_completion=False, help="Safe OT analysis toolkit.")
 
-TOOLS: list[Tool] = [zeek]
+TOOLS: list[Tool] = [zeek, suricata, tshark]
 
 
 @app.command()

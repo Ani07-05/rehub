@@ -58,5 +58,6 @@ def test_accept_writes_normalized_golden(fixtures: Path) -> None:
 def test_repo_golden_exists_for_every_fixture() -> None:
     repo = Path(__file__).resolve().parents[1] / "fixtures"
     for pcap in (repo / "pcaps").glob("*.pcap"):
-        assert golden_path(repo, "zeek", pcap.stem).exists()
+        for tool in ("zeek", "suricata", "tshark"):
+            assert golden_path(repo, tool, pcap.stem).exists()
     shutil.which("true")
