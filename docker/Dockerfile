@@ -3,12 +3,18 @@ ARG ZEEK_IMAGE=zeek/zeek:8.0.10@sha256:73e80e9cd23ff71fd28d158e9a9af5c7b2b0ef5d4
 
 FROM ${ZEEK_IMAGE} AS plugins
 ARG ICSNPP_S7COMM_SHA=7ebeb03a0f954541369361651d1c27d09a64b5a3
+ARG ICSNPP_ENIP_SHA=808f90b0d834481a1368dbcad650f63c88550991
+ARG ICSNPP_MODBUS_SHA=27f22b41fd9839c0bad1b98df9c6289e578fd02a
 RUN apt-get update \
     && apt-get install -y --no-install-recommends build-essential cmake git ca-certificates flex bison libpcap-dev libssl-dev zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
-RUN git clone https://github.com/cisagov/icsnpp-s7comm /src/icsnpp-s7comm \
-    && git -C /src/icsnpp-s7comm checkout ${ICSNPP_S7COMM_SHA} \
-    && zkg install /src/icsnpp-s7comm --force --nodeps
+RUN set -e; \
+    for spec in s7comm:${ICSNPP_S7COMM_SHA} enip:${ICSNPP_ENIP_SHA} modbus:${ICSNPP_MODBUS_SHA}; do \
+        name=${spec%%:*}; sha=${spec##*:}; \
+        git clone https://github.com/cisagov/icsnpp-$name /src/icsnpp-$name; \
+        git -C /src/icsnpp-$name checkout $sha; \
+        zkg install /src/icsnpp-$name --force --nodeps; \
+    done
 
 FROM ${ZEEK_IMAGE}
 COPY --from=plugins /usr/local/zeek /usr/local/zeek
