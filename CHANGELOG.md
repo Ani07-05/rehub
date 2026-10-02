@@ -24,4 +24,9 @@
 - `web` can draft YARA rules (hosted models need a confirmation click) and analyze bundled samples.
 - `report`: the same view as one offline, read only HTML file.
 - `init`, `tools`, `capture` (passive tcpdump).
+- `setup`: pull the registry image named by `registry_image` (or `--source`), else build from
+  `docker/Dockerfile`. A missing image now says to run `rehub setup`.
+- Release workflow publishes a multi-arch image to GHCR on `v*` tags after doctor passes.
+- PLC check reports a network call with an address on one line as one finding.
+- `web`: help answers scroll to the question, and alarm tiles show `-` until checked.
 - CI: lint, types, tests, packet-send guard, image build with doctor.

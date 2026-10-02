@@ -28,7 +28,20 @@ docker run --rm --network host --cap-add NET_RAW --cap-add NET_ADMIN \
 Capturing is the only case where a rehub container gets a network. It only listens. This path
 was tested on the loopback interface inside the image, not yet on a real interface.
 
-## Build the image
+## Get the image
+
+```sh
+uv run rehub setup
+```
+
+`setup` does nothing if `rehub:pinned` is already present. Otherwise it pulls the registry image
+named by `registry_image` in `config.toml` (or `--source REGISTRY/IMAGE`) and tags it
+`rehub:pinned`. If there is no registry image or the pull fails, it builds from
+`docker/Dockerfile`. It then prints the pinned and installed tool versions. Published images are
+built by `.github/workflows/publish-image.yml` for amd64 and arm64 on a `v*` tag, after `rehub
+doctor` passes on the amd64 build.
+
+To build by hand instead:
 
 ```sh
 docker build -f docker/Dockerfile -t rehub:pinned .

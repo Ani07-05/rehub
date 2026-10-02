@@ -56,12 +56,16 @@ standard database of PLC logic vulnerabilities and rehub does not test firmware.
 ## Quick start
 
 ```sh
-docker build -f docker/Dockerfile -t rehub:pinned .
 uv sync
 uv run rehub init
+uv run rehub setup      # pulls the published image, or builds it from docker/Dockerfile
 uv run rehub doctor
 uv run rehub web --open
 ```
+
+`setup` pulls the prebuilt image when `registry_image` is set in `~/.rehub/config.toml` (or you
+pass `--source`), and builds it locally otherwise. A local build takes a while because Zeek
+plugins and Suricata are compiled.
 
 See [docs/install.md](docs/install.md), [docs/usage.md](docs/usage.md) and
 [docs/description.md](docs/description.md). A five minute demo is in `demo/demo.sh`.
