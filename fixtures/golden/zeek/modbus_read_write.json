@@ -1,0 +1,148 @@
+{
+  "logs": {
+    "conn": [
+      {
+        "conn_state": "SF",
+        "history": "ShADdFf",
+        "id.orig_h": "10.0.0.11",
+        "id.orig_p": 50000,
+        "id.resp_h": "10.0.0.21",
+        "id.resp_p": 502,
+        "ip_proto": 6,
+        "local_orig": true,
+        "local_resp": true,
+        "missed_bytes": 0,
+        "orig_bytes": 41,
+        "orig_ip_bytes": 321,
+        "orig_pkts": 7,
+        "proto": "tcp",
+        "resp_bytes": 53,
+        "resp_ip_bytes": 253,
+        "resp_pkts": 5,
+        "service": "modbus"
+      }
+    ],
+    "modbus": [
+      {
+        "func": "READ_HOLDING_REGISTERS",
+        "id.orig_h": "10.0.0.11",
+        "id.orig_p": 50000,
+        "id.resp_h": "10.0.0.21",
+        "id.resp_p": 502,
+        "pdu_type": "REQ",
+        "tid": 1,
+        "unit": 1
+      },
+      {
+        "func": "READ_HOLDING_REGISTERS",
+        "id.orig_h": "10.0.0.11",
+        "id.orig_p": 50000,
+        "id.resp_h": "10.0.0.21",
+        "id.resp_p": 502,
+        "pdu_type": "RESP",
+        "tid": 1,
+        "unit": 1
+      },
+      {
+        "func": "WRITE_MULTIPLE_REGISTERS",
+        "id.orig_h": "10.0.0.11",
+        "id.orig_p": 50000,
+        "id.resp_h": "10.0.0.21",
+        "id.resp_p": 502,
+        "pdu_type": "REQ",
+        "tid": 3,
+        "unit": 1
+      },
+      {
+        "func": "WRITE_MULTIPLE_REGISTERS",
+        "id.orig_h": "10.0.0.11",
+        "id.orig_p": 50000,
+        "id.resp_h": "10.0.0.21",
+        "id.resp_p": 502,
+        "pdu_type": "RESP",
+        "tid": 3,
+        "unit": 1
+      },
+      {
+        "func": "WRITE_SINGLE_REGISTER",
+        "id.orig_h": "10.0.0.11",
+        "id.orig_p": 50000,
+        "id.resp_h": "10.0.0.21",
+        "id.resp_p": 502,
+        "pdu_type": "REQ",
+        "tid": 2,
+        "unit": 1
+      },
+      {
+        "func": "WRITE_SINGLE_REGISTER",
+        "id.orig_h": "10.0.0.11",
+        "id.orig_p": 50000,
+        "id.resp_h": "10.0.0.21",
+        "id.resp_p": 502,
+        "pdu_type": "RESP",
+        "tid": 2,
+        "unit": 1
+      }
+    ],
+    "modbus_detailed": [
+      {
+        "address": 0,
+        "func": "READ_HOLDING_REGISTERS",
+        "id.orig_h": "10.0.0.11",
+        "id.orig_p": 50000,
+        "id.resp_h": "10.0.0.21",
+        "id.resp_p": 502,
+        "matched": true,
+        "quantity": 10,
+        "response_values": [
+          1,
+          515,
+          1029,
+          1543,
+          2057,
+          2571,
+          3085,
+          3599,
+          4113,
+          4627
+        ],
+        "tid": 1,
+        "unit": 1
+      },
+      {
+        "address": 1,
+        "func": "WRITE_SINGLE_REGISTER",
+        "id.orig_h": "10.0.0.11",
+        "id.orig_p": 50000,
+        "id.resp_h": "10.0.0.21",
+        "id.resp_p": 502,
+        "matched": true,
+        "quantity": 1,
+        "request_values": [
+          255
+        ],
+        "response_values": [
+          255
+        ],
+        "tid": 2,
+        "unit": 1
+      },
+      {
+        "address": 10,
+        "func": "WRITE_MULTIPLE_REGISTERS",
+        "id.orig_h": "10.0.0.11",
+        "id.orig_p": 50000,
+        "id.resp_h": "10.0.0.21",
+        "id.resp_p": 502,
+        "matched": true,
+        "quantity": 2,
+        "request_values": [
+          1,
+          2
+        ],
+        "tid": 3,
+        "unit": 1
+      }
+    ]
+  }
+}
