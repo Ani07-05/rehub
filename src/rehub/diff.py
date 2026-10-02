@@ -5,6 +5,11 @@ from typing import Any
 Diff = dict[str, Any]
 
 
+def _short(row: dict[str, Any], limit: int = 140) -> str:
+    text = _key(row)
+    return text if len(text) <= limit else text[: limit - 3] + "..."
+
+
 def _key(row: dict[str, Any]) -> str:
     return json.dumps(row, sort_keys=True)
 
@@ -73,6 +78,6 @@ def summarize(diff: Diff) -> list[str]:
                     f"{name}: field changed: {field}: "
                     f"{change['before'].get(field)!r} -> {change['after'].get(field)!r}"
                 )
-        lines += [f"{name}: row added: {_key(r)}" for r in entry.get("rows_added", [])]
-        lines += [f"{name}: row removed: {_key(r)}" for r in entry.get("rows_removed", [])]
+        lines += [f"{name}: row added: {_short(r)}" for r in entry.get("rows_added", [])]
+        lines += [f"{name}: row removed: {_short(r)}" for r in entry.get("rows_removed", [])]
     return lines
