@@ -14,7 +14,7 @@
 |---|---|
 | macOS arm64, Docker Desktop | Used for development. Analysis, doctor and baselines work. |
 | Linux amd64 / arm64 | Expected to work. Not exercised by the author yet. |
-| Windows | Not supported. |
+| Windows 10/11, Docker Desktop | Untested. Analysis, doctor and baselines should work (needs Python 3.13 and `uv`). `capture` is not available on Windows. |
 
 `capture` is different. It needs a real network interface and privileges, which Docker Desktop
 on macOS does not give a container. Run `capture` on a Linux host or inside the image with host

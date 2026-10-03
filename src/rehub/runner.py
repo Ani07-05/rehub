@@ -57,11 +57,10 @@ class DockerRunner:
         input_file: Path | None = None,
         extra: Mapping[str, Path] | None = None,
     ) -> subprocess.CompletedProcess[str]:
-        cmd = [
-            "docker", "run", "--rm", "--network", "none",
-            "--user", f"{os.getuid()}:{os.getgid()}",
-            "-v", f"{workdir.resolve()}:/out", "-w", "/out",
-        ]  # fmt: skip
+        cmd = ["docker", "run", "--rm", "--network", "none"]
+        if hasattr(os, "getuid"):
+            cmd += ["--user", f"{os.getuid()}:{os.getgid()}"]
+        cmd += ["-v", f"{workdir.resolve()}:/out", "-w", "/out"]
         targets: dict[str, str] = {}
         for token, path in _inputs(input_file, extra).items():
             target = f"/in/{token.strip('{}')}/{path.name}"
