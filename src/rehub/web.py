@@ -10,6 +10,7 @@ import tempfile
 import threading
 from collections.abc import Callable
 from dataclasses import asdict
+from email.message import Message
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -419,8 +420,18 @@ def _decode_files(items: object, directory: Path, label: str) -> list[Path]:
     return paths
 
 
+def _content_length(headers: Message) -> int:
+    try:
+        length = int(headers.get("Content-Length", "0"))
+    except ValueError as exc:
+        raise ApiError("the Content-Length header is not a number") from exc
+    if length < 0:
+        raise ApiError("the Content-Length header is negative")
+    return length
+
+
 def _store_upload(handler: BaseHTTPRequestHandler) -> tuple[str, Path]:
-    length = int(handler.headers.get("Content-Length", "0"))
+    length = _content_length(handler.headers)
     if length <= 0:
         raise ApiError("the upload is empty")
     if length > MAX_PCAP:
@@ -522,7 +533,7 @@ class Handler(BaseHTTPRequestHandler):
         return True
 
     def _read_json(self) -> Json:
-        length = int(self.headers.get("Content-Length", "0"))
+        length = _content_length(self.headers)
         if length > MAX_JSON:
             raise ApiError("the request is too large", 413)
         try:
