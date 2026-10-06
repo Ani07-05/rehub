@@ -51,7 +51,7 @@ The Zeek base image is pinned by digest. tshark and tcpdump are pinned to exact 
 versions. The apt build dependencies used to compile ICSNPP and Suricata are not pinned, so a
 rebuild on a later date can differ in those. Run `rehub doctor` after any rebuild.
 
-## Install the CLI
+## Install rehub
 
 ```sh
 uv sync

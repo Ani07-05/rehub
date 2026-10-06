@@ -2,7 +2,7 @@
 
 ## What rehub is
 
-rehub is a command line tool for one analyst working on OT network captures. It runs
+rehub is a local app with a browser interface for one analyst working on OT network captures. It runs
 Zeek with the CISA ICSNPP protocol parsers, Suricata, tshark and YARA-X, and keeps what it
 learns in one local SQLite database.
 
@@ -74,7 +74,7 @@ are compared separately and reported, not written into golden files.
 
 ## Related tools
 
-Malcolm is a full stack with dashboards, while rehub is a small CLI for one analyst on one
+Malcolm is a full stack with dashboards, while rehub is a small local app for one analyst on one
 capture. ICSForge generates test traffic and checks detection gaps, while rehub analyzes
 captures and checks the tools themselves. The two can be used together. ICSForge is GPLv3 and
 none of its code is bundled here.

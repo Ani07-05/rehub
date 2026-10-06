@@ -1,8 +1,9 @@
 # rehub
 
-A command line tool that runs the standard open source network analysis tools on OT traffic,
-passively, remembers what "normal" looked like, and tells you what an upgrade of any of those
-tools will change before you do it.
+A local app with a browser interface. It runs the standard open source network analysis tools on
+OT traffic, passively, remembers what "normal" looked like, and tells you what an upgrade of any
+of those tools will change before you do it. Drop in a capture and read the result in the page.
+Install and start it from a terminal once, then the work happens in the page. The command line stays for scripting.
 
 It wraps Zeek (with the CISA ICSNPP parsers), Suricata, tshark, YARA-X and tcpdump. It does
 not replace any of them.
