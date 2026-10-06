@@ -12,6 +12,7 @@ Environment and files:
 | `REHUB_MODEL` | Model name for `yara explain` and `yara draft` |
 | `REHUB_OLLAMA_URL` | Ollama endpoint, default `http://localhost:11434` |
 | `ANTHROPIC_API_KEY` | Needed only for `--provider anthropic` |
+| `GROQ_API_KEY` | Needed only for `--provider groq` |
 | `config.toml` | `image`, `provider`, `model` defaults. Flags and environment win |
 
 ## init
@@ -261,7 +262,10 @@ The status is `validated` only if it compiled and every check passed. Otherwise 
 positive sample is needed to validate. Sample contents are never sent to a model. The rule is
 stored in the `yara_rules` table with its status. Exit 0 only when validated.
 
-Providers: `ollama` (default, local) or `anthropic` (hosted). For a hosted provider rehub prints
+Providers: `ollama` (default, local), `anthropic` or `groq` (hosted). The default Groq model is
+`openai/gpt-oss-120b`; `openai/gpt-oss-20b` and `qwen/qwen3.8-27b` also work through `--model`.
+Which models you can use depends on your Groq account. Drafts are asked to be minimal: one or two
+distinctive strings and a short condition. For a hosted provider rehub prints
 exactly what will be sent and stops unless you pass `--yes`.
 
 `fetch` clones the Yara-Rules repository at a pinned commit (GPL-2.0, legacy YARA syntax, last

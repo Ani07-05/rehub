@@ -178,3 +178,54 @@ def test_hosted_explain_requires_yes(monkeypatch: pytest.MonkeyPatch, tmp_path: 
     )
     assert allowed.exit_code == 0
     assert provider.sent == [(yara_ai.EXPLAIN_SYSTEM, GOOD)]
+
+
+def test_groq_needs_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    with pytest.raises(yara_ai.ProviderError, match="GROQ_API_KEY"):
+        yara_ai.make_provider("groq", None)
+
+
+def test_groq_is_hosted_with_default_model(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("GROQ_API_KEY", "k")
+    monkeypatch.delenv("REHUB_MODEL", raising=False)
+    provider = yara_ai.make_provider("groq", None)
+    assert provider.hosted
+    assert provider.name == "groq"
+    assert isinstance(provider, yara_ai.GroqProvider)
+    assert provider.model == yara_ai.DEFAULT_GROQ_MODEL
+
+
+def test_groq_sends_chat_request(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: dict[str, object] = {}
+
+    def fake_post(
+        url: str, payload: dict[str, object], headers: dict[str, str]
+    ) -> dict[str, object]:
+        seen.update(url=url, payload=payload, headers=headers)
+        return {"choices": [{"message": {"content": GOOD}}]}
+
+    monkeypatch.setattr(yara_ai, "_post_json", fake_post)
+    reply = yara_ai.GroqProvider("m", "k").complete("sys", "usr")
+    assert reply == GOOD
+    assert seen["url"] == yara_ai.GROQ_URL
+    assert seen["headers"] == {"authorization": "Bearer k", "user-agent": "rehub"}
+    assert seen["payload"] == {
+        "model": "m",
+        "temperature": 0.2,
+        "max_tokens": 1024,
+        "messages": [
+            {"role": "system", "content": "sys"},
+            {"role": "user", "content": "usr"},
+        ],
+    }
+
+
+def test_groq_rejects_odd_response(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(yara_ai, "_post_json", lambda url, payload, headers: {"choices": []})
+    with pytest.raises(yara_ai.ProviderError, match="groq"):
+        yara_ai.GroqProvider("m", "k").complete("s", "u")
+
+
+def test_draft_prompt_asks_for_minimal_rules() -> None:
+    assert "smallest rule" in yara_ai.DRAFT_SYSTEM

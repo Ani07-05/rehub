@@ -79,7 +79,8 @@ Install [Ollama](https://ollama.com), pull a model, then set `REHUB_MODEL` (or p
 The default endpoint is `http://localhost:11434`, override with `REHUB_OLLAMA_URL`. The model
 calls run on the host, so they work with the host CLI and not from inside the image.
 
-A hosted provider is opt-in: set `ANTHROPIC_API_KEY` and pass `--provider anthropic`. rehub
+A hosted provider is opt-in: set `ANTHROPIC_API_KEY` and pass `--provider anthropic`, or set
+`GROQ_API_KEY` and pass `--provider groq`. rehub
 prints the exact text it would send and sends nothing until you also pass `--yes`.
 
 ## Open the interface

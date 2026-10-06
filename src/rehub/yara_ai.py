@@ -14,13 +14,19 @@ from rehub.tools import yara
 
 DRAFT_SYSTEM = (
     "You write YARA rules for the YARA-X engine. Reply with only the rule text, "
-    "no explanation and no markdown. Use only features of YARA-X."
+    "no explanation and no markdown. Use only features of YARA-X. "
+    "Write the smallest rule that works: one or two distinctive strings or byte patterns "
+    "taken from the description, a short condition, no metadata, no comments, and no imports "
+    "unless the condition needs one. Prefer an exact short string over a wildcard or a regex. "
+    "Never match generic content that benign files also contain."
 )
 EXPLAIN_SYSTEM = (
     "You explain YARA rules in plain English to an industrial control system defender. "
     "Say what the rule matches, how it could misfire, and what it cannot detect."
 )
 DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-5-5"
+DEFAULT_GROQ_MODEL = "openai/gpt-oss-120b"
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 MAX_RETRIES = 3
 
 _FENCE = re.compile(r"```(?:yara|yar)?\s*\n(.*?)```", re.DOTALL | re.IGNORECASE)
@@ -99,6 +105,34 @@ class AnthropicProvider:
         return "".join(b["text"] for b in blocks if isinstance(b, dict) and "text" in b)
 
 
+@dataclass
+class GroqProvider:
+    model: str
+    api_key: str
+    name: str = "groq"
+    hosted: bool = True
+
+    def complete(self, system: str, user: str) -> str:
+        payload: dict[str, object] = {
+            "model": self.model,
+            "temperature": 0.2,
+            "max_tokens": 1024,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+        }
+        headers = {"authorization": f"Bearer {self.api_key}", "user-agent": "rehub"}
+        body = _post_json(GROQ_URL, payload, headers)
+        choices = body.get("choices")
+        if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict):
+            raise ProviderError("unexpected response from groq")
+        message = choices[0].get("message")
+        if not isinstance(message, dict) or not isinstance(message.get("content"), str):
+            raise ProviderError("unexpected response from groq")
+        return str(message["content"])
+
+
 def make_provider(name: str, model: str | None) -> Provider:
     model = model or os.environ.get("REHUB_MODEL")
     if name == "ollama":
@@ -110,7 +144,12 @@ def make_provider(name: str, model: str | None) -> Provider:
         if not key:
             raise ProviderError("anthropic needs ANTHROPIC_API_KEY in the environment")
         return AnthropicProvider(model or DEFAULT_ANTHROPIC_MODEL, key)
-    raise ProviderError(f"unknown provider {name!r} (use ollama or anthropic)")
+    if name == "groq":
+        key = os.environ.get("GROQ_API_KEY")
+        if not key:
+            raise ProviderError("groq needs GROQ_API_KEY in the environment")
+        return GroqProvider(model or DEFAULT_GROQ_MODEL, key)
+    raise ProviderError(f"unknown provider {name!r} (use ollama, anthropic or groq)")
 
 
 def draft_prompt(description: str) -> str:

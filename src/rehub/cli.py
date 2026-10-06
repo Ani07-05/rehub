@@ -210,7 +210,7 @@ def baseline_diff(
 yara_app = typer.Typer(no_args_is_help=True, help="Scan, explain and draft YARA rules (YARA-X).")
 app.add_typer(yara_app, name="yara")
 
-PROVIDER_HELP = "LLM backend: ollama (local, default) or anthropic (hosted, needs --yes)."
+PROVIDER_HELP = "LLM backend: ollama (local, default), anthropic or groq (hosted, need --yes)."
 
 
 def _provider(name: str | None, model: str | None) -> yara_ai.Provider:
