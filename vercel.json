@@ -1,0 +1,16 @@
+{
+  "framework": null,
+  "buildCommand": "cp scripts/install.sh scripts/install.ps1 docs/",
+  "outputDirectory": "docs",
+  "headers": [
+    {
+      "source": "/install.(sh|ps1)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        }
+      ]
+    }
+  ]
+}

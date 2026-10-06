@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>rehub</title>
-<meta name="description" content="rehub runs Zeek, Suricata, tshark and YARA-X on OT captures, passively, and reports what a tool upgrade will change. One command installs it on macOS, Linux or Windows.">
+<meta name="description" content="rehub runs Zeek, Suricata, tshark, YARA-X and tcpdump on OT captures, passively, and reports what a tool upgrade will change. One command installs it on macOS, Linux or Windows.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -123,7 +123,7 @@ footer a{display:inline-flex;align-items:center;min-height:36px}
       <path class="dev" pathLength="1" d="M572 44 H600 L612 6 L626 66 L638 44 H760"/>
     </svg>
     <h1>Know what normal looks like on your plant network.</h1>
-    <p class="sub">rehub runs Zeek, Suricata, tshark and YARA-X on OT captures, remembers the baseline, and tells you what a tool upgrade will change before you make it. It only listens.</p>
+    <p class="sub">rehub runs Zeek, Suricata, tshark, YARA-X and tcpdump on OT captures, remembers the baseline, and tells you what a tool upgrade will change before you make it. It only listens.</p>
     <p class="proto">Reads S7comm, EtherNet/IP and Modbus/TCP through the CISA ICSNPP parsers. Works on capture files you give it.</p>
 
     <div class="install">
@@ -268,6 +268,13 @@ uv run rehub web --open</pre>
       r:'https://github.com/Ani07-05/rehub/blob/main/scripts/install.ps1',
       n:'Run in PowerShell. Needs Docker Desktop running and git. Untested on Windows so far; live capture is not available there.'}
   };
+  var RAW='https://raw.githubusercontent.com/Ani07-05/rehub/main/scripts';
+  if(/\.vercel\.app$/.test(location.hostname)){
+    var self=location.origin,RAWW=RAW.replace('githubusercontent.com/','githubusercontent.com/<wbr>').replace('rehub/main/','rehub/main/<wbr>');
+    for(var q in cmds){var c0=cmds[q];c0.t=c0.t.split(RAW).join(self);c0.h=c0.h.split('https://raw.githubusercontent.com/<wbr>Ani07-05/rehub/main/<wbr>scripts').join(self);c0.r=c0.r.replace('https://github.com/Ani07-05/rehub/blob/main/scripts',self)}
+    [].forEach.call(document.querySelectorAll('code,pre'),function(el){el.innerHTML=el.innerHTML.split(RAW).join(self).split('https://raw.githubusercontent.com/<wbr>Ani07-05/rehub/main/<wbr>scripts').join(self)});
+    [].forEach.call(document.querySelectorAll('a[href*="/scripts/install."]'),function(a){a.href=a.href.replace('https://github.com/Ani07-05/rehub/blob/main/scripts',self)});
+  }
   var cur='mac',btn=document.getElementById('copy'),code=document.getElementById('cmd');
   var tabs={mac:document.getElementById('tab-mac'),linux:document.getElementById('tab-linux'),win:document.getElementById('tab-win')};
   function show(k){
