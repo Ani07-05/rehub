@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rehub</title>
+<meta name="description" content="rehub runs Zeek, Suricata, tshark and YARA-X on OT captures, passively, and reports what a tool upgrade will change. One command installs it on macOS, Linux or Windows.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#FFFFFF; --wash:#F3F6FB; --ink:#15181E; --muted:#555D6B; --rule:#DADDE2;
+  --blue:#1348DC; --blue-hover:#0F3AB5; --on-blue:#FFFFFF; --select:#D6E3FF;
+  --serif:"IBM Plex Serif",Georgia,serif; --sans:"Public Sans",system-ui,-apple-system,sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --canvas:#0B0D12; --wash:#12161E; --ink:#E9ECF3; --muted:#9AA3B2; --rule:#252A35;
+  --blue:#7D9DFF; --blue-hover:#9BB4FF; --on-blue:#0B0D12; --select:#22325F; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --canvas:#0B0D12; --wash:#12161E; --ink:#E9ECF3; --muted:#9AA3B2; --rule:#252A35;
+  --blue:#7D9DFF; --blue-hover:#9BB4FF; --on-blue:#0B0D12; --select:#22325F; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--canvas);color:var(--ink);font:400 1.0625rem/1.6 var(--sans);padding-inline:clamp(16px,5vw,40px);-webkit-font-smoothing:antialiased}
+::selection{background:var(--select)}
+a{color:var(--blue);text-underline-offset:3px;text-decoration-thickness:1px}
+a:hover{color:var(--blue-hover)}
+:focus-visible{outline:2px solid var(--blue);outline-offset:3px;border-radius:4px}
+code,pre{font-family:var(--mono);font-variant-ligatures:none}
+
+.bar,.col{max-width:760px;margin-inline:auto}
+.bar{display:flex;justify-content:space-between;align-items:center;padding-block:8px}
+.bar a{color:var(--muted);text-decoration:none;font-size:.95rem;display:inline-flex;align-items:center;min-height:44px;padding-inline:4px}
+.bar a:hover{color:var(--ink)}
+.bar a.logo{display:inline-flex;align-items:center;gap:10px;color:var(--ink);padding-inline:0}
+.bar a.logo:hover{color:var(--ink)}
+.logo .word{font:600 1.45rem/1 var(--serif);letter-spacing:-.02em}
+.logo .mark{flex:none}
+.logo .pulse{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 1.1s .15s cubic-bezier(.16,1,.3,1) forwards}
+.bar nav{display:flex;gap:16px}
+
+.hero{padding-block:clamp(24px,5vw,56px) clamp(40px,7vw,72px)}
+.trace{display:block;width:100%;height:72px;margin-bottom:clamp(28px,5vw,48px);overflow:visible}
+.trace path{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;stroke-width:2}
+.trace .base{stroke:var(--muted);stroke-dasharray:1;stroke-dashoffset:1;animation:draw 2.2s .3s cubic-bezier(.45,0,.2,1) forwards}
+.trace .dev{stroke:var(--blue);stroke-width:2.6;stroke-dasharray:1;stroke-dashoffset:1;animation:draw .9s 2.3s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+@media(prefers-reduced-motion:reduce){.logo .pulse,.trace .base,.trace .dev{animation:none;stroke-dashoffset:0}}
+h1{font:500 clamp(2.4rem,6vw,3.9rem)/1.08 var(--serif);letter-spacing:-.02em;margin:0 0 24px;text-wrap:balance}
+.sub{font-size:1.2rem;color:var(--muted);max-width:56ch;margin:0 0 12px}
+.proto{font-size:.98rem;color:var(--muted);max-width:60ch;margin:0 0 36px}
+
+.install{background:var(--wash);border:1px solid var(--rule);border-radius:8px;padding:20px}
+.tabs{display:flex;gap:4px;margin:-4px 0 14px}
+.tab{background:transparent;color:var(--muted);border:1px solid transparent;min-height:36px;padding:0 12px;font-weight:500}
+.tab:hover{background:transparent;color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-color:var(--rule);background:var(--canvas)}
+.install .row{display:flex;gap:16px;align-items:flex-start}
+.install code{flex:1;min-width:0;font-size:.95rem;line-height:1.6;overflow-wrap:anywhere;user-select:all}
+.install .p{color:var(--muted);user-select:none}
+.install .foot{display:flex;flex-wrap:wrap;gap:4px 24px;align-items:center;margin-top:16px;padding-top:6px;border-top:1px solid var(--rule);font-size:.92rem;color:var(--muted)}
+.install .foot a,.install .foot span{display:inline-flex;align-items:center;min-height:36px}
+button{font:500 .95rem var(--sans);background:var(--blue);color:var(--on-blue);border:0;border-radius:6px;padding:0 18px;min-height:44px;cursor:pointer;flex:none}
+button:hover{background:var(--blue-hover)}
+@media(max-width:520px){.install .row{flex-direction:column}button{width:100%}}
+
+section{padding-block:clamp(40px,7vw,72px);border-top:1px solid var(--rule)}
+h2{font:500 1.7rem/1.2 var(--serif);letter-spacing:-.01em;margin:0 0 16px;text-wrap:balance}
+p{margin:0 0 16px;max-width:62ch}
+.lead{color:var(--muted)}
+.cap{font-size:.88rem;color:var(--muted);margin:0}
+
+.log{background:var(--wash);border:1px solid var(--rule);border-radius:8px;padding:18px 20px;margin:24px 0 8px}
+.log pre,.log ol{margin:0;font-size:.88rem;line-height:1.75;color:var(--ink);overflow-wrap:anywhere}
+.log pre{white-space:pre-wrap}
+.log ol{list-style:none;padding:0;white-space:normal;font-family:var(--mono);font-variant-ligatures:none}
+.log li{padding-left:3.4ch;text-indent:-3.4ch}
+.ok{color:var(--blue)}
+.dim{color:var(--muted)}
+
+ul{margin:0;padding:0;list-style:none;max-width:62ch}
+ul li{padding-block:14px;border-bottom:1px solid var(--rule)}
+ul li:first-child{padding-top:0}
+ul li:last-child{border-bottom:0;padding-bottom:0}
+ul b{font-weight:600}
+
+.tbl{overflow-x:auto;margin-top:8px}
+table{border-collapse:collapse;width:100%;font-size:.98rem}
+th,td{text-align:left;padding:12px 16px 12px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-weight:500;color:var(--muted);font-size:.9rem}
+td.v{font-family:var(--mono);font-size:.92rem;white-space:nowrap;font-variant-numeric:tabular-nums}
+
+pre.block{background:var(--wash);border:1px solid var(--rule);border-radius:8px;padding:16px 20px;overflow-x:auto;font-size:.9rem;line-height:1.7;margin:16px 0}
+
+.end{text-align:left}
+.end .install{margin-top:8px}
+
+footer{max-width:760px;margin:0 auto;padding-block:24px 48px;border-top:1px solid var(--rule);color:var(--muted);font-size:.92rem;display:flex;flex-wrap:wrap;gap:4px 24px;justify-content:space-between}
+footer a{display:inline-flex;align-items:center;min-height:36px}
+</style>
+</head>
+<body>
+<header class="bar">
+  <a class="logo" href="#top" aria-label="rehub">
+    <svg class="mark" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true">
+      <rect x="1.5" y="1.5" width="25" height="25" rx="6" fill="none" stroke="currentColor" stroke-width="2"/>
+      <path class="pulse" pathLength="1" d="M5.5 15 H10 L12.2 8.5 L15.2 20 L17 15 H22.5" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span class="word">rehub</span>
+  </a>
+  <nav aria-label="Project">
+    <a href="https://github.com/Ani07-05/rehub/blob/main/docs/install.md">Install guide</a>
+    <a href="https://github.com/Ani07-05/rehub">GitHub</a>
+  </nav>
+</header>
+
+<main>
+  <div class="col hero" id="top">
+    <svg class="trace" viewBox="0 0 760 72" preserveAspectRatio="none" role="img" aria-label="A steady line with regular pulses and one taller pulse that departs from the pattern">
+      <path class="base" pathLength="1" d="M0 44 H92 L100 34 L108 52 L116 44 H212 L220 34 L228 52 L236 44 H332 L340 34 L348 52 L356 44 H452 L460 34 L468 52 L476 44 H572"/>
+      <path class="dev" pathLength="1" d="M572 44 H600 L612 6 L626 66 L638 44 H760"/>
+    </svg>
+    <h1>Know what normal looks like on your plant network.</h1>
+    <p class="sub">rehub runs Zeek, Suricata, tshark and YARA-X on OT captures, remembers the baseline, and tells you what a tool upgrade will change before you make it. It only listens.</p>
+    <p class="proto">Reads S7comm, EtherNet/IP and Modbus/TCP through the CISA ICSNPP parsers. Works on capture files you give it.</p>
+
+    <div class="install">
+      <div class="tabs" role="tablist" aria-label="Operating system">
+        <button class="tab" role="tab" id="tab-mac" aria-controls="cmd" aria-selected="true" type="button">macOS</button>
+        <button class="tab" role="tab" id="tab-linux" aria-controls="cmd" aria-selected="false" type="button">Linux</button>
+        <button class="tab" role="tab" id="tab-win" aria-controls="cmd" aria-selected="false" type="button">Windows</button>
+      </div>
+      <div class="row">
+        <code id="cmd" role="tabpanel" aria-labelledby="tab-mac"><span class="p" id="prompt">$ </span><span id="cmdtext">curl -fsSL https://raw.githubusercontent.com/<wbr>Ani07-05/rehub/main/<wbr>scripts/install.sh | sh</span></code>
+        <button id="copy" type="button" aria-live="polite">Copy command</button>
+      </div>
+      <div class="foot">
+        <a id="readlink" href="https://github.com/Ani07-05/rehub/blob/main/scripts/install.sh">Read the script first</a>
+        <span id="needs">Needs Docker running and git. Tested on macOS arm64.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <section>
+      <h2>What it will not do</h2>
+      <ul>
+        <li><b>Send a packet.</b> No code path sends one and no active scanner is wrapped. CI fails if a raw socket, scapy send call or scanner name appears in the source.</li>
+        <li><b>Reach the network during analysis.</b> Tools run in containers with networking off and read-only inputs. Only the install downloads anything.</li>
+        <li><b>Serve anyone else.</b> The interface listens on 127.0.0.1 behind a private link. One analyst, no multi-user mode.</li>
+        <li><b>Prove anything about your plant.</b> Doctor runs the tools over small synthetic captures and shows whether they behave the same. It does not predict what breaks on your traffic.</li>
+        <li><b>Parse more than three protocols.</b> Suricata has no S7comm parser, so Zeek is the source for S7.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>What an upgrade check looks like</h2>
+      <p class="lead">Before you move sensors to a new tool version, <code>rehub doctor</code> replays the bundled fixtures through every tool and compares the result with the committed golden output.</p>
+      <div class="log">
+<pre><span class="dim">$ rehub doctor</span>
+zeek 8.0.10: <span class="ok">PASS</span>
+  enip_identity: PASS
+  modbus_read_write: PASS
+  s7_download_stop: PASS
+<span class="dim">  # a mismatch prints the changed version or fixture, e.g.</span>
+<span class="dim">  version: zeek 9.0.0 (pinned 8.0.10)</span></pre>
+      </div>
+      <p class="cap">Illustrative. The layout follows the command's output and the fixture names are the bundled ones. It is not a recorded run.</p>
+    </section>
+
+    <section>
+      <h2>What the command does</h2>
+      <p class="lead">It installs uv if you have none, clones rehub into <code>~/.rehub/src</code>, pulls or builds the tool image, runs the doctor check, and opens the interface on your own machine. The last step keeps running until you press Ctrl+C.</p>
+      <div class="log">
+        <ol id="log" aria-label="Installer steps">
+          <li><span class="ok">==&gt;</span> Installing uv</li>
+          <li><span class="ok">==&gt;</span> Cloning rehub to ~/.rehub/src</li>
+          <li><span class="ok">==&gt;</span> Installing rehub</li>
+          <li><span class="ok">==&gt;</span> Creating ~/.rehub</li>
+          <li><span class="ok">==&gt;</span> Getting the tool image (a local build can take several minutes)</li>
+          <li><span class="ok">==&gt;</span> Checking the tools behave as pinned</li>
+          <li><span class="ok">==&gt;</span> Opening the interface (Ctrl+C to stop)</li>
+        </ol>
+      </div>
+      <p class="cap">Step names from the script. Timings and tool output left out.</p>
+    </section>
+
+    <section>
+      <h2>What it touches</h2>
+      <ul>
+        <li><b>Downloads.</b> uv from astral.sh, rehub from github.com, and the tool image. The image is pulled from a registry when one is configured and built locally otherwise. A build also fetches Zeek, Suricata and YARA-X sources and Debian packages.</li>
+        <li><b>Writes.</b> <code>~/.rehub</code> (source, database, uploads, settings) and a <code>rehub</code> command in <code>~/.local/bin</code> (<code>rehub.cmd</code> on Windows). uv's own installer may add itself to your shell profile. The script does not use sudo.</li>
+        <li><b>Runs.</b> Docker containers, with networking off for analysis. The interface opens in your browser at 127.0.0.1.</li>
+      </ul>
+      <p style="margin-top:20px">If it stops, it prints why. Docker not running and missing git are checked first. Running the command again is safe: it updates the checkout and skips the image if it is already present. To remove rehub, delete <code>~/.rehub</code> and <code>~/.local/bin/rehub</code>, then run <code>docker rmi rehub:pinned</code>.</p>
+    </section>
+
+    <section>
+      <h2>Pin what you run</h2>
+      <p>The one-liner follows <code>main</code>, which can change after you read it. To audit and then run exactly what you read, download it, check it, and pin the checkout to the same tag or commit:</p>
+      <pre class="block">curl -fsSLO https://raw.githubusercontent.com/Ani07-05/rehub/&lt;tag-or-sha&gt;/scripts/install.sh
+shasum -a 256 install.sh
+less install.sh
+REHUB_REF=&lt;tag-or-sha&gt; sh install.sh</pre>
+      <p>On Windows, set <code>$env:REHUB_REF</code> to the same tag or commit before running <code>install.ps1</code>. Or run each step yourself:</p>
+      <pre class="block">git clone https://github.com/Ani07-05/rehub
+cd rehub
+uv sync
+uv run rehub init
+uv run rehub setup
+uv run rehub doctor
+uv run rehub web --open</pre>
+    </section>
+
+    <section>
+      <h2>Pinned tools</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Tool</th><th>Pinned version</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td>Zeek</td><td class="v">8.0.10</td><td>Protocol logs, with the CISA ICSNPP parsers</td></tr>
+            <tr><td>Suricata</td><td class="v">8.0.7</td><td>Rule matching</td></tr>
+            <tr><td>YARA-X</td><td class="v">1.21.0</td><td>Rule scanning of files and payloads</td></tr>
+            <tr><td>tshark</td><td class="v">Debian pin</td><td>Packet dissection</td></tr>
+            <tr><td>tcpdump</td><td class="v">Debian pin</td><td>Live capture on Linux hosts, listen only</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="cap" style="margin-top:12px">Exact Debian package versions and the ICSNPP commits are in docker/Dockerfile.</p>
+    </section>
+
+    <section class="end">
+      <h2>Run it</h2>
+      <div class="install">
+        <div class="row">
+          <code><span class="p">$ </span>curl -fsSL https://raw.githubusercontent.com/<wbr>Ani07-05/rehub/main/<wbr>scripts/install.sh | sh</code>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <code><span class="p">PS&gt; </span>irm https://raw.githubusercontent.com/<wbr>Ani07-05/rehub/main/<wbr>scripts/install.ps1 | iex</code>
+        </div>
+        <div class="foot">
+          <a href="https://github.com/Ani07-05/rehub/blob/main/scripts/install.sh">Read the script first</a>
+          <a href="https://github.com/Ani07-05/rehub/blob/main/docs/install.md">Install guide</a>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <a href="https://github.com/Ani07-05/rehub/blob/main/LICENSE">Apache-2.0</a>
+  <a href="https://github.com/Ani07-05/rehub">github.com/Ani07-05/rehub</a>
+</footer>
+
+<script>
+(function(){
+  var SH='curl -fsSL https://raw.githubusercontent.com/Ani07-05/rehub/main/scripts/install.sh | sh';
+  var SHH='curl -fsSL https://raw.githubusercontent.com/<wbr>Ani07-05/rehub/main/<wbr>scripts/install.sh | sh';
+  var SHR='https://github.com/Ani07-05/rehub/blob/main/scripts/install.sh';
+  var cmds={
+    mac:{label:'macOS',p:'$ ',t:SH,h:SHH,r:SHR,n:'Needs Docker Desktop running and git. Tested on macOS arm64.'},
+    linux:{label:'Linux',p:'$ ',t:SH,h:SHH,r:SHR,n:'Needs Docker running and git. Expected to work, not yet tested. Live capture works here.'},
+    win:{label:'Windows',p:'PS> ',
+      t:'irm https://raw.githubusercontent.com/Ani07-05/rehub/main/scripts/install.ps1 | iex',
+      h:'irm https://raw.githubusercontent.com/<wbr>Ani07-05/rehub/main/<wbr>scripts/install.ps1 | iex',
+      r:'https://github.com/Ani07-05/rehub/blob/main/scripts/install.ps1',
+      n:'Run in PowerShell. Needs Docker Desktop running and git. Untested on Windows so far; live capture is not available there.'}
+  };
+  var cur='mac',btn=document.getElementById('copy'),code=document.getElementById('cmd');
+  var tabs={mac:document.getElementById('tab-mac'),linux:document.getElementById('tab-linux'),win:document.getElementById('tab-win')};
+  function show(k){
+    cur=k;var c=cmds[k];
+    document.getElementById('prompt').textContent=c.p;
+    document.getElementById('cmdtext').innerHTML=c.h;
+    document.getElementById('readlink').href=c.r;
+    document.getElementById('needs').textContent=c.n;
+    code.setAttribute('aria-labelledby','tab-'+k);
+    for(var x in tabs)tabs[x].setAttribute('aria-selected',String(x===k));
+  }
+  for(var k in tabs)(function(k){tabs[k].addEventListener('click',function(){show(k)})})(k);
+
+  function detect(){
+    var uad=navigator.userAgentData&&navigator.userAgentData.platform||'';
+    var ua=navigator.userAgent||'',pl=navigator.platform||'';
+    var all=(uad+' '+pl+' '+ua);
+    if(/iPhone|iPad|iPod|Android/i.test(all))return {os:'mobile'};
+    if(/Win/i.test(all))return {os:'win'};
+    if(/Mac/i.test(all))return {os:'mac'};
+    if(/Linux|X11|CrOS/i.test(all))return {os:'linux'};
+    return {os:null};
+  }
+  var d=detect();
+  if(d.os&&d.os!=='mobile')show(d.os);
+
+  function reset(){setTimeout(function(){btn.textContent='Copy command'},1800)}
+  function select(){var r=document.createRange();r.selectNodeContents(document.getElementById('cmdtext'));var s=getSelection();s.removeAllRanges();s.addRange(r)}
+  btn.addEventListener('click',function(){
+    function fallback(){select();btn.textContent='Press Ctrl+C';reset()}
+    var text=cmds[cur].t;
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){btn.textContent='Copied';reset()},fallback)
+    }else fallback();
+  });
+})();
+</script>
+</body>
+</html>
