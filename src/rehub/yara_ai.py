@@ -133,21 +133,21 @@ class GroqProvider:
         return str(message["content"])
 
 
-def make_provider(name: str, model: str | None) -> Provider:
+def make_provider(name: str, model: str | None, api_key: str | None = None) -> Provider:
     model = model or os.environ.get("REHUB_MODEL")
     if name == "ollama":
         if not model:
             raise ProviderError("ollama needs a model: pass --model or set REHUB_MODEL")
         return OllamaProvider(model, os.environ.get("REHUB_OLLAMA_URL", "http://localhost:11434"))
     if name == "anthropic":
-        key = os.environ.get("ANTHROPIC_API_KEY")
+        key = api_key or os.environ.get("ANTHROPIC_API_KEY")
         if not key:
-            raise ProviderError("anthropic needs ANTHROPIC_API_KEY in the environment")
+            raise ProviderError("anthropic needs an API key: paste one or set ANTHROPIC_API_KEY")
         return AnthropicProvider(model or DEFAULT_ANTHROPIC_MODEL, key)
     if name == "groq":
-        key = os.environ.get("GROQ_API_KEY")
+        key = api_key or os.environ.get("GROQ_API_KEY")
         if not key:
-            raise ProviderError("groq needs GROQ_API_KEY in the environment")
+            raise ProviderError("groq needs an API key: paste one or set GROQ_API_KEY")
         return GroqProvider(model or DEFAULT_GROQ_MODEL, key)
     raise ProviderError(f"unknown provider {name!r} (use ollama, anthropic or groq)")
 

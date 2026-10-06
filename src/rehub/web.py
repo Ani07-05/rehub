@@ -285,7 +285,9 @@ class Api:
         try:
             cfg = config.load()
             provider = yara_ai.make_provider(
-                str(body.get("provider") or cfg.provider), body.get("model") or cfg.model
+                str(body.get("provider") or cfg.provider),
+                body.get("model") or cfg.model,
+                _api_key(body),
             )
         except (yara_ai.ProviderError, config.ConfigError) as exc:
             raise ApiError(str(exc)) from exc
@@ -322,7 +324,9 @@ class Api:
             cfg = config.load()
             name = body.get("provider") or cfg.provider
             model = body.get("model") or cfg.model
-            provider = yara_ai.make_provider(str(name), str(model) if model else None)
+            provider = yara_ai.make_provider(
+                str(name), str(model) if model else None, _api_key(body)
+            )
         except (yara_ai.ProviderError, config.ConfigError) as exc:
             raise ApiError(str(exc)) from exc
         if provider.hosted and body.get("yes") is not True:

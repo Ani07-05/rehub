@@ -231,7 +231,7 @@ def b64(text: bytes) -> str:
 def draft_env(monkeypatch: pytest.MonkeyPatch) -> dict[str, FakeProvider]:
     holder: dict[str, FakeProvider] = {}
 
-    def make(name: str, model: str | None) -> FakeProvider:
+    def make(name: str, model: str | None, api_key: str | None = None) -> FakeProvider:
         return holder["provider"]
 
     monkeypatch.setattr(yara_ai, "make_provider", make)
@@ -378,8 +378,19 @@ def test_guide_hosted_model_needs_confirmation_and_never_gets_more(
     server: ThreadingHTTPServer, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     provider = FakeProvider(hosted=True, replies=["an answer"])
-    monkeypatch.setattr(yara_ai, "make_provider", lambda name, model: provider)
-    body = {"question": "explain new action", "use_model": True, "provider": "anthropic"}
+    seen: list[str | None] = []
+
+    def make(name: str, model: str | None, api_key: str | None = None) -> FakeProvider:
+        seen.append(api_key)
+        return provider
+
+    monkeypatch.setattr(yara_ai, "make_provider", make)
+    body = {
+        "question": "explain new action",
+        "use_model": True,
+        "provider": "groq",
+        "api_key": "  pasted-key ",
+    }
     status, res = call(server, "/api/guide", "POST", body, POST)
     assert isinstance(res, dict)
     assert res["needs_confirmation"] is True
@@ -389,6 +400,8 @@ def test_guide_hosted_model_needs_confirmation_and_never_gets_more(
     assert isinstance(res, dict)
     assert res["answer"] == "an answer"
     assert provider.sent == ["explain new action"]
+    assert seen == ["pasted-key", "pasted-key"]
+    assert "pasted-key" not in json.dumps(res)
 
 
 def test_guide_validates_question(server: ThreadingHTTPServer) -> None:
@@ -450,7 +463,7 @@ def test_demo_runs_both_samples_and_saves_the_baseline_once(
     status, state = call(server, "/api/state")
     assert isinstance(state, dict)
     assert [b["name"] for b in state["baselines"]] == ["plant-normal"]
-    assert state["device_labels"]["10.0.0.20"] == "Boiler PLC"
+    assert state["device_labels"]["10.0.0.20"] == "Boiler PLC (sample)"
     diff = state["diffs"][f"plant-normal|{res['changed_run']}"]
     assert diff["new_pairs"] == [["10.0.0.99", "10.0.0.20"]]
     call(server, "/api/devices", "POST", {"ip": "10.0.0.20", "label": "Main boiler"}, POST)

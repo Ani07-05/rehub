@@ -154,7 +154,7 @@ def test_hosted_draft_requires_yes_and_sends_nothing_without_it(
 ) -> None:
     monkeypatch.setenv("REHUB_HOME", str(tmp_path))
     provider = FakeProvider([GOOD], hosted=True)
-    monkeypatch.setattr(yara_ai, "make_provider", lambda name, model: provider)
+    monkeypatch.setattr(yara_ai, "make_provider", lambda name, model, api_key=None: provider)
     result = CliRunner().invoke(
         cli.app, ["yara", "draft", "detect plc stop", "--provider", "anthropic"]
     )
@@ -166,7 +166,7 @@ def test_hosted_draft_requires_yes_and_sends_nothing_without_it(
 
 def test_hosted_explain_requires_yes(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     provider = FakeProvider(["explained"], hosted=True)
-    monkeypatch.setattr(yara_ai, "make_provider", lambda name, model: provider)
+    monkeypatch.setattr(yara_ai, "make_provider", lambda name, model, api_key=None: provider)
     rule = tmp_path / "r.yar"
     rule.write_text(GOOD)
     cli_runner = CliRunner()
@@ -229,3 +229,12 @@ def test_groq_rejects_odd_response(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_draft_prompt_asks_for_minimal_rules() -> None:
     assert "smallest rule" in yara_ai.DRAFT_SYSTEM
+
+
+def test_pasted_key_wins_over_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("GROQ_API_KEY", "from-env")
+    provider = yara_ai.make_provider("groq", None, "pasted")
+    assert isinstance(provider, yara_ai.GroqProvider)
+    assert provider.api_key == "pasted"
+    monkeypatch.delenv("GROQ_API_KEY")
+    assert isinstance(yara_ai.make_provider("groq", None, "pasted"), yara_ai.GroqProvider)
