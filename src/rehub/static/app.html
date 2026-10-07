@@ -79,20 +79,24 @@ button, select { font: inherit; color: inherit; }
 .rail nav::before {
   content: ""; position: absolute; left: 4px; top: 6px; bottom: 6px; width: 3px; background: var(--rail);
 }
-.rail button {
+.rail nav button {
   position: relative; text-align: left; background: none; border: 0; cursor: pointer;
   padding: 9px 12px 9px 14px; font: 500 17px/1.2 var(--head); color: var(--ink-2);
 }
-.rail button::before {
+.rail nav button::before {
   content: ""; position: absolute; left: -18px; top: 50%; width: 11px; height: 11px; margin-top: -5px;
   border: 3px solid var(--rail); background: var(--panel); border-radius: 50%;
 }
-.rail button[aria-current="page"] { color: var(--ink); font-weight: 700; background: var(--surface); }
-.rail button[aria-current="page"]::before { background: var(--ink); border-color: var(--ink); }
-.rail button:hover { color: var(--ink); }
+.rail nav button[aria-current="page"] { color: var(--ink); font-weight: 700; background: var(--surface); }
+.rail nav button[aria-current="page"]::before { background: var(--ink); border-color: var(--ink); }
+.rail nav button:hover { color: var(--ink); }
+.navgroup { padding: 14px 0 2px 14px; font: 600 13px/1.2 var(--head); color: var(--ink-2); }
 .rail .meta { margin-top: auto; padding-right: 20px; font-size: 12px; color: var(--ink-2); overflow-wrap: anywhere; }
+.rail .meta p { margin: 0; }
+.rail .meta summary { cursor: pointer; margin-top: 4px; }
+.rail .meta details p { margin-top: 6px; }
 
-main { padding: 24px 32px 96px 24px; min-width: 0; }
+main { padding: 24px 32px 96px 24px; min-width: 0; max-width: 1180px; }
 [hidden] { display: none !important; }
 
 /* annunciator: lit only when something is abnormal */
@@ -209,7 +213,7 @@ pre { margin: 0; padding: 12px 14px; background: var(--surface-2); overflow-x: a
   .app { grid-template-columns: minmax(0, 1fr); }
   .rail { position: static; height: auto; padding: 16px 16px 8px; }
   .rail nav { flex-direction: row; flex-wrap: wrap; padding-left: 0; gap: 4px; }
-  .rail nav::before, .rail button::before { display: none; }
+  .rail nav::before, .rail nav button::before, .navgroup { display: none; }
   .rail .meta { display: none; }
   .brand { margin-bottom: 12px; }
   main { padding: 8px 16px 40px; }
@@ -344,17 +348,20 @@ details.card[open] summary { margin-bottom: 12px; }
 @media (max-width: 860px) { .devrow { grid-template-columns: 1fr; } }
 /* help assistant */
 .helpbtn {
-  position: fixed; right: 20px; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 20;
-  padding: 11px 18px; background: var(--ink); color: var(--panel); border: 0; cursor: pointer; font: 700 16px/1 var(--head);
+  align-self: flex-start; margin: 20px 0 0 18px;
+  padding: 10px 16px; background: var(--ink); color: var(--panel); border: 0; cursor: pointer; font: 700 16px/1 var(--head);
 }
 .help {
-  position: fixed; right: 20px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); z-index: 20;
+  position: fixed; left: 20px; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 20;
   width: min(420px, calc(100vw - 32px)); max-height: min(640px, calc(100vh - 110px)); display: flex; flex-direction: column;
   background: var(--surface); border: 2px solid var(--ink);
 }
 .help[hidden] { display: none; }
 .help header { padding: 12px 16px; border-bottom: 1px solid var(--line); }
 .help header strong { font: 700 18px/1.2 var(--head); }
+.help .helphead { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.help .helpclose { width: 44px; height: 44px; margin: -10px -12px -10px 0; border: 0; background: transparent; color: var(--ink); font: 400 28px/1 var(--body); cursor: pointer; }
+.help .helpclose:hover { background: var(--surface-2); }
 .help header span { display: block; color: var(--ink-2); font-size: 13px; }
 .help .log { padding: 12px 16px; overflow-y: auto; flex: 1; }
 .help .q { font: 600 15px/1.3 var(--head); margin: 12px 0 4px; }
@@ -373,16 +380,50 @@ details.card[open] summary { margin-bottom: 12px; }
 .datapaths { display: grid; gap: 4px; margin: 8px 0 0; font: 13px/1.5 var(--mono); }
 .datapaths span { color: var(--ink-2); font-family: var(--body); }
 details.explain { margin: 10px 0 0; }
+.lede + details.explain { margin: -8px 0 16px; }
 details.explain summary { cursor: pointer; font: 600 15px/1.2 var(--head); }
 details.explain p { margin: 8px 0 0; max-width: 66ch; color: var(--ink-2); }
 @media (max-width: 860px) { .changes li { padding-left: 36px; } }
+
+.splash { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 24px; overflow: auto; background: var(--panel); }
+.splash-in { width: min(720px, 100%); }
+.splash .mark { display: flex; align-items: center; gap: 18px; }
+.splash .mark svg { width: 64px; height: 64px; color: var(--ink); flex: none; }
+.splash h1 { margin: 0; font: 700 68px/1 var(--head); letter-spacing: 0.01em; }
+.splash .tag { margin: 16px 0 36px; font: 500 21px/1.3 var(--head); color: var(--ink-2); }
+.sp-ladder { padding: 0 28px; border-left: 3px solid var(--rail); border-right: 3px solid var(--rail); }
+.sp-rung { position: relative; display: grid; grid-template-columns: minmax(0, 460px) 1fr auto; align-items: center; padding: 16px 0; }
+.sp-rung::before, .sp-rung::after { content: ""; position: absolute; left: -28px; right: -28px; top: 50%; height: 3px; margin-top: -1px; }
+.sp-rung::before { background: var(--line); }
+.sp-rung::after { background: var(--advisory); transform: scaleX(0); transform-origin: left; transition: transform 0.55s ease-out; }
+.sp-rung.on::after { transform: scaleX(1); }
+.sp-rung .sp-contact { position: relative; z-index: 1; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); }
+.sp-rung .sp-contact b { display: block; font: 700 18px/1.2 var(--head); }
+.sp-rung .sp-contact span { display: block; margin-top: 2px; font-size: 13px; color: var(--ink-2); overflow-wrap: anywhere; }
+.sp-rung .sp-coil { position: relative; z-index: 1; grid-column: 3; width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--rail); background: var(--panel); transition: background 0.2s ease 0.45s, border-color 0.2s ease 0.45s; }
+.sp-rung.on .sp-coil { background: var(--advisory); border-color: var(--advisory); }
+.splash .sp-enter { margin-top: 32px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.splash .sp-enter p { margin: 0; font-size: 13px; color: var(--ink-2); max-width: 46ch; }
+@media (max-width: 600px) {
+  .splash h1 { font-size: 46px; }
+  .splash .mark svg { width: 48px; height: 48px; }
+  .sp-ladder { padding: 0 14px; }
+  .sp-rung { grid-template-columns: minmax(0, 1fr) auto; }
+  .sp-rung::before, .sp-rung::after { left: -14px; right: -14px; }
+  .sp-rung .sp-coil { grid-column: 2; margin-left: 12px; }
+  .sp-rung .sp-spacer { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-rung::after, .sp-rung .sp-coil { transition: none; }
+}
 </style>
 
 <div class="app">
   <aside class="rail">
     <h2 class="brand">rehub<small>Did anything change on your plant network?</small></h2>
     <nav id="nav" aria-label="Pages"></nav>
-    <p class="meta" id="meta"></p>
+    <button type="button" class="helpbtn" id="helpbtn" hidden aria-controls="help" aria-expanded="false">Ask for help</button>
+    <div class="meta" id="meta"></div>
   </aside>
   <main>
     <div class="annunciator" id="annunciator" role="status" aria-label="Alarm summary"></div>
@@ -390,7 +431,6 @@ details.explain p { margin: 8px 0 0; max-width: 66ch; color: var(--ink-2); }
     <div id="view"></div>
   </main>
 </div>
-<button type="button" class="helpbtn" id="helpbtn" hidden aria-controls="help" aria-expanded="false">Ask for help</button>
 <aside class="help" id="help" hidden aria-label="Help assistant"></aside>
 
 <script>
@@ -400,9 +440,9 @@ const LIVE = EMBEDDED === null;
 
 const VIEWS = [
   { id: "start", label: "Start" },
-  { id: "changes", label: "What changed" },
+  { id: "changes", label: "What changed", group: "Your network" },
   { id: "traffic", label: "Conversations" },
-  { id: "plc", label: "PLC code" },
+  { id: "plc", label: "PLC code", group: "Tools and rules" },
   { id: "doctor", label: "Upgrade check" },
   { id: "rules", label: "Detection rules" },
 ];
@@ -412,10 +452,10 @@ const state = {
   analysis: null, toolCheck: null, yara: null,
   baselineName: "", doctorImage: "", rules: "", ruleSample: null,
   samples: [],
-  draftDesc: "", draftProvider: "ollama", draftModel: "", draftPositives: [], draftBenign: [],
+  draftDesc: "", draftProvider: "groq", draftModel: "", draftKey: "", draftPositives: [], draftBenign: [],
   draftResult: null, draftConfirm: null,
   plc: { file: null, name: "", text: "", result: null, approveName: "" },
-  help: { open: false, question: "", log: [], confirm: null, error: null, busy: false, provider: "ollama", model: "" },
+  help: { open: false, question: "", log: [], confirm: null, error: null, busy: false, provider: "groq", model: "", key: "" },
 };
 
 function h(tag, attrs, ...kids) {
@@ -558,7 +598,7 @@ function draftRule(confirmed) {
   if (!state.draftDesc.trim()) { state.error = "Describe what the rule should detect."; render(); return Promise.resolve(); }
   return act("Writing a rule, then compiling it and testing it on your files.", async () => {
     const result = await postJson("/api/yara/draft", {
-      description: state.draftDesc, provider: state.draftProvider, model: state.draftModel.trim(), yes: confirmed === true,
+      description: state.draftDesc, provider: state.draftProvider, model: state.draftModel.trim(), api_key: state.draftKey.trim(), yes: confirmed === true,
       positives: await filesPayload(state.draftPositives), benign: await filesPayload(state.draftBenign),
     });
     if (result.needs_confirmation) { state.draftConfirm = result; state.draftResult = null; return; }
@@ -895,7 +935,7 @@ function viewStart() {
   const fresh = LIVE && observedRuns().length === 0 && DATA.baselines.length === 0;
   return [
     h("h1", {}, "Did anything change on your plant network?"),
-    h("p", { class: "lede" }, "rehub compares a new recording of your network with one you called normal. It also reviews updated PLC programs and tests your monitoring tools. It only reads files and never sends anything to your network. Work down this list."),
+    h("p", { class: "lede" }, "rehub compares a new recording of your network with one you called normal. Work down this list."), h("details", { class: "explain" }, h("summary", {}, "More"), h("p", {}, "It also reviews updated PLC programs and tests your monitoring tools. It only reads files and never sends anything to your network.")),
     fresh ? startChoice() : null,
     LIVE ? progressBar(all) : null,
     h("ol", { class: "flow" }, all.map((st) => {
@@ -916,7 +956,7 @@ function viewStart() {
 
 function nextLine() {
   const next = nextStep();
-  if (!next || state.view === "start") return null;
+  if (!next || state.view !== "changes") return null;
   return h("p", { class: "nextline" }, "Next step: ", h("strong", {}, next.title), " ",
     h("button", { type: "button", class: "link", onclick: () => go("start") }, "Go to Start"));
 }
@@ -972,8 +1012,9 @@ function viewChanges() {
     said.length ? h("div", { class: "row", style: "margin:-6px 0 14px; align-items:center" },
       LIVE ? btn("Copy summary", () => copyText(changesSummary(said, base, state.run), "summary"), false) : null,
       h("span", { class: "fine", style: "margin:0" }, "A new item is a question to check, not proof of an attack. If your normal recording was short, rare but ordinary traffic can show up as new.")) : null,
-    h("p", { class: "section-title" }, "Every conversation"),
-    h("ul", { class: "panel rungs" }, rows.map(rung)),
+    h("details", { class: "explain", open: state.rungsOpen ?? !said.length, ontoggle: (e) => { state.rungsOpen = e.target.open; } },
+      h("summary", {}, `See every conversation (${rows.length})`),
+      h("ul", { class: "panel rungs", style: "margin-top:10px" }, rows.map(rung))),
     LIVE ? h("details", { class: "panel card", style: "margin-top:16px" },
       h("summary", {}, "Accept this recording as a new normal"),
       h("p", {}, "This saves a new snapshot under a new name. The existing one stays exactly as it is."),
@@ -994,7 +1035,7 @@ function devicesCard() {
   if (!ips.length) return null;
   return h("div", { class: "panel card" },
     h("h3", {}, "Name your devices"),
-    h("p", {}, "Names make every finding easier to read. rehub guesses what each device is from how it talks. Correct it if it is wrong."),
+    h("p", {}, "rehub only sees addresses in the recording. It cannot confirm a device is real or what it is. The role is a guess from who starts conversations, and a name is a label you choose. Names apply to that address in every recording."),
     ips.map((ip) => h("div", { class: "devrow" },
       h("span", { class: "ip" }, ip),
       h("span", { class: "role" }, ROLE_TEXT[roles[ip]]),
@@ -1109,7 +1150,7 @@ function plcResult(r) {
 
 function viewPlc() {
   const parts = [h("h1", {}, "PLC code")];
-  parts.push(h("p", { class: "lede" }, "Upload the source of a PLC program: Structured Text or SCL as a text file, or a Rockwell L5X export. rehub flags patterns a person should look at, and shows what changed since the version you approved. It is a review, not a vulnerability scan: it cannot test the controller's firmware. For a deeper data-flow analysis, research tools such as AttkFinder exist; see the usage notes."));
+  parts.push(h("p", { class: "lede" }, "Upload PLC program source (Structured Text, SCL or Rockwell L5X). rehub flags risky patterns and shows what changed since the version you approved."), h("details", { class: "explain" }, h("summary", {}, "More"), h("p", {}, "It is a review, not a vulnerability scan: it cannot test the controller's firmware. For a deeper data-flow analysis, research tools such as AttkFinder exist; see the usage notes.")));
   if (LIVE) {
     parts.push(h("div", { class: "panel card" },
       h("h3", {}, "Check a program"),
@@ -1149,7 +1190,7 @@ function toolCheckCard() {
 
 function viewDoctor() {
   const parts = [h("h1", {}, "Upgrade check")];
-  parts.push(h("p", { class: "lede" }, "Your monitoring tools change between versions, and a change can quietly alter what they report. This replays built-in test recordings through every tool and compares the results with what was expected. Run it on a new version before you roll it out."));
+  parts.push(h("p", { class: "lede" }, "Run this on a new tool version before you roll it out. It replays test recordings through every tool and names anything that came out different."), h("details", { class: "explain" }, h("summary", {}, "More"), h("p", {}, "Your monitoring tools change between versions, and a change can quietly alter what they report. This compares each result with what was expected.")));
   if (LIVE) {
     parts.push(h("div", { class: "panel card" },
       h("h3", {}, "Test a tool image"),
@@ -1211,8 +1252,7 @@ function filePicker(label, stateKey) {
 }
 
 function draftCard() {
-  const hosted = state.draftProvider === "anthropic";
-  const c = state.draftConfirm;
+    const c = state.draftConfirm;
   const r = state.draftResult;
   return h("div", { class: "panel card" },
     h("h3", {}, "Draft a rule with a model"),
@@ -1222,15 +1262,19 @@ function draftCard() {
         placeholder: "S7comm job request that stops the PLC",
         oninput: (e) => { state.draftDesc = e.target.value; } }, state.draftDesc)),
     h("div", { class: "row", style: "margin-top:10px" },
-      select("Model provider", [{ value: "ollama", label: "Local (Ollama)" }, { value: "anthropic", label: "Hosted (Anthropic)" }], state.draftProvider,
+      select("Model provider", PROVIDERS, state.draftProvider,
         (v) => { state.draftProvider = v; state.draftConfirm = null; render(); }),
       h("label", {}, "Model name",
-        h("input", { type: "text", placeholder: hosted ? "default: claude-sonnet-5-5" : "name of your Ollama model", value: state.draftModel,
+        h("input", { type: "text", placeholder: PROVIDER_MODELS[state.draftProvider], value: state.draftModel,
           oninput: (e) => { state.draftModel = e.target.value; } }))),
+    h("label", { class: "stack", style: "margin-top:10px" }, "Your API key",
+      h("input", { type: "password", autocomplete: "off", spellcheck: "false", placeholder: "Paste your key",
+        value: state.draftKey, oninput: (e) => { state.draftKey = e.target.value; } }),
+      h("span", { style: "font:12px var(--body); color:var(--ink-2)" }, "Kept in this page only. It goes to the model company and is never saved to disk.")),
     h("div", { class: "row", style: "margin-top:10px" },
       filePicker("Files it must match", "draftPositives"),
       filePicker("Clean files it must not match", "draftBenign")),
-    hosted ? h("p", { style: "margin:12px 0 0" }, "A hosted model is a third party. You will see exactly what would be sent before anything leaves this computer.") : null,
+    h("p", { style: "margin:12px 0 0" }, "The model is run by a third party. You will see exactly what would be sent before anything leaves this computer."),
     h("div", { style: "margin-top:12px" }, btn("Draft rule", () => draftRule(false), true)),
     c ? h("div", { class: "banner", style: "margin:16px 0 0" },
       h("strong", {}, `Nothing has been sent yet. This text would go to ${c.provider}:`),
@@ -1277,6 +1321,8 @@ function viewRules() {
 }
 
 /* ---- help assistant ---- */
+const PROVIDERS = [{ value: "groq", label: "Groq" }, { value: "anthropic", label: "Anthropic" }];
+const PROVIDER_MODELS = { groq: "default: openai/gpt-oss-120b", anthropic: "default: claude-sonnet-5-5" };
 const QUICK_QUESTIONS = [
   "What is a capture (pcap) file?",
   "Where do I get a capture?",
@@ -1291,7 +1337,7 @@ async function askHelp(question, useModel, yes) {
   if (!q || state.help.busy) return;
   state.help.busy = true; state.help.error = null; renderHelp();
   try {
-    const res = await postJson("/api/guide", { question: q, use_model: !!useModel, provider: state.help.provider, model: state.help.model.trim(), yes: yes === true });
+    const res = await postJson("/api/guide", { question: q, use_model: !!useModel, provider: state.help.provider, model: state.help.model.trim(), api_key: state.help.key.trim(), yes: yes === true });
     if (res.needs_confirmation) { state.help.confirm = { ...res, question: q }; }
     else { state.help.confirm = null; state.help.log.push({ q, res }); state.help.question = ""; }
   } catch (e) {
@@ -1330,7 +1376,9 @@ function renderHelp() {
   const input = h("input", { type: "text", "aria-label": "Your question", placeholder: "Ask anything about using rehub", value: hp.question,
     oninput: (e) => { hp.question = e.target.value; } });
   panel.replaceChildren(
-    h("header", {}, h("strong", {}, "Ask about rehub"), h("span", {}, "Answers come from the built-in manual. Your recordings and code are never part of a question.")),
+    h("header", {}, h("div", { class: "helphead" }, h("strong", {}, "Ask about rehub"),
+      h("button", { type: "button", class: "helpclose", "aria-label": "Close help", title: "Close (Esc)", onclick: closeHelp }, "\u00d7")),
+      h("span", {}, "Answers come from the built-in manual. Your recordings and code are never part of a question.")),
     h("div", { class: "log" },
       entries.length ? entries : h("div", {}, h("p", { class: "a" }, "Not sure where to start? Pick a question:"),
         h("div", { class: "chips" }, QUICK_QUESTIONS.map((t) => h("button", { type: "button", class: "chip", onclick: () => askHelp(t, false) }, t)))),
@@ -1340,14 +1388,18 @@ function renderHelp() {
     h("details", {},
       h("summary", {}, "Use an AI model for other questions"),
       h("div", { class: "row", style: "margin-top:8px" },
-        select("Model", [{ value: "ollama", label: "Local (Ollama)" }, { value: "anthropic", label: "Hosted (Anthropic)" }], hp.provider, (v) => { hp.provider = v; hp.confirm = null; renderHelp(); }),
-        h("label", {}, "Model name", h("input", { type: "text", placeholder: hp.provider === "anthropic" ? "default" : "your Ollama model", value: hp.model, oninput: (e) => { hp.model = e.target.value; } }))),
+        select("Model provider", PROVIDERS, hp.provider, (v) => { hp.provider = v; hp.confirm = null; renderHelp(); }),
+        h("label", {}, "Model name", h("input", { type: "text", placeholder: PROVIDER_MODELS[hp.provider], value: hp.model, oninput: (e) => { hp.model = e.target.value; } }))),
+      h("label", { class: "stack", style: "margin-top:8px" }, "Your API key",
+        h("input", { type: "password", autocomplete: "off", spellcheck: "false", placeholder: "Paste your key", value: hp.key, oninput: (e) => { hp.key = e.target.value; } })),
       h("div", { style: "margin-top:8px" }, h("button", { type: "button", class: "btn", onclick: () => askHelp(hp.question, true) }, "Ask the model"))),
     h("form", { onsubmit: (e) => { e.preventDefault(); askHelp(hp.question, false); } }, input,
       h("button", { type: "submit", class: "btn primary", disabled: hp.busy }, "Ask")));
 }
 
+function closeHelp() { state.help.open = false; renderHelp(); document.getElementById("helpbtn").focus(); }
 document.getElementById("helpbtn").addEventListener("click", () => { state.help.open = !state.help.open; renderHelp(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && state.help.open) closeHelp(); });
 
 /* ---- shell ---- */
 function annunciator() {
@@ -1357,10 +1409,10 @@ function annunciator() {
     ["New device pair", d ? d.new_pairs.length : 0, "major", !!d],
     ["New action", d ? d.new_actions.length : 0, "minor", !!d],
     ["Went quiet", d ? d.missing_pairs.length : 0, "advisory", !!d],
-    ["Upgrade check failing", fails, "major", DATA.doctor.length > 0],
+    [fails ? "Upgrade check failing" : "Upgrade check", fails, "major", DATA.doctor.length > 0],
   ];
   const box = document.getElementById("annunciator");
-  box.hidden = state.view === "start" && windows.every(([, n]) => n === 0);
+  box.hidden = !["start", "changes", "traffic"].includes(state.view) || (state.view === "start" && windows.every(([, n]) => n === 0));
   box.replaceChildren(...windows.map(([legend, n, level, known]) =>
     h("div", { class: `win ${n ? "lit " + level : ""}`, "aria-label": known ? false : `${legend}: not checked yet` },
       h("span", { class: "lamp", "aria-hidden": "true" }),
@@ -1377,8 +1429,9 @@ function banner() {
 }
 
 function renderNav() {
-  document.getElementById("nav").replaceChildren(...VIEWS.map((v) =>
-    h("button", { type: "button", "aria-current": v.id === state.view ? "page" : false, onclick: () => go(v.id) }, v.label)));
+  document.getElementById("nav").replaceChildren(...VIEWS.map((v) => [
+    v.group ? h("span", { class: "navgroup" }, v.group) : null,
+    h("button", { type: "button", "aria-current": v.id === state.view ? "page" : false, onclick: () => go(v.id) }, v.label)]).flat().filter(Boolean));
 }
 
 function render() {
@@ -1390,6 +1443,53 @@ function render() {
   if (line) body.splice(1, 0, line);
   document.getElementById("view").replaceChildren(...body.flat(Infinity).filter(Boolean));
   renderHelp();
+}
+
+const MARK_SVG = `<svg viewBox="0 0 56 56" fill="none" stroke="currentColor" stroke-width="4" aria-hidden="true"><path d="M8 6v44M48 6v44"/><path d="M8 28h9M23 28h8M43 28h5" stroke-width="3"/><path d="M17 19v18M23 19v18" stroke-width="3"/><circle cx="37" cy="28" r="6" fill="var(--advisory)" stroke="var(--advisory)" stroke-width="3"/></svg>`;
+
+function welcomed() {
+  try { return sessionStorage.getItem("rehub-welcomed") === "1"; } catch (e) { return false; }
+}
+
+function showSplash() {
+  const recordings = observedRuns().length;
+  const snapshots = DATA.baselines.length;
+  const dbLine = recordings || snapshots
+    ? `${DATA.home}/rehub.db, ${plural(recordings, "recording")}, ${plural(snapshots, "normal snapshot")}`
+    : `${DATA.home}/rehub.db, empty and ready for your first recording`;
+  const rungs = [
+    ["Private link accepted", "Only this browser can open this session."],
+    ["Database connected", dbLine],
+    ["Tools run offline", `Zeek, Suricata, tshark and YARA run in ${DATA.image} with no network.`],
+  ].map(([title, detail]) => h("div", { class: "sp-rung" },
+    h("div", { class: "sp-contact" }, h("b", {}, title), h("span", {}, detail)),
+    h("div", { class: "sp-spacer" }),
+    h("div", { class: "sp-coil" })));
+  const enter = h("button", { type: "button", class: "btn primary", disabled: true }, "Open rehub");
+  const mark = h("div", { class: "mark" });
+  mark.innerHTML = MARK_SVG;
+  mark.append(h("h1", {}, "rehub"));
+  const splash = h("div", { class: "splash", role: "dialog", "aria-label": "Welcome to rehub" },
+    h("div", { class: "splash-in" },
+      mark,
+      h("p", { class: "tag" }, "Did anything change on your plant network?"),
+      h("div", { class: "sp-ladder" }, rungs),
+      h("div", { class: "sp-enter" }, enter,
+        h("p", {}, "Passive only. rehub never sends a packet to your network."))));
+  document.body.append(splash);
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const done = () => {
+    try { sessionStorage.setItem("rehub-welcomed", "1"); } catch (e) { /* tab keeps working without it */ }
+    splash.remove();
+  };
+  enter.addEventListener("click", done);
+  rungs.forEach((r, i) => setTimeout(() => r.classList.add("on"), still ? 0 : 350 + i * 650));
+  setTimeout(() => { enter.disabled = false; enter.focus(); }, still ? 0 : 350 + rungs.length * 650 + 300);
+}
+
+function setMeta(line, more) {
+  document.getElementById("meta").replaceChildren(h("p", {}, line),
+    more ? h("details", {}, h("summary", {}, "Details"), h("p", {}, more)) : null);
 }
 
 async function init() {
@@ -1406,12 +1506,13 @@ async function init() {
       return;
     }
     await loadSamples();
-    document.getElementById("meta").textContent = `Your data stays on this computer in ${DATA.home}. Tools run in ${DATA.image} with no network.`;
+    setMeta("Your data stays on this computer.", `Stored in ${DATA.home.replace(/^\/(Users|home)\/[^/]+/, "~")}. Tools run in ${DATA.image} with no network.`);
   } else {
     pickDefaults();
-    document.getElementById("meta").textContent = `Snapshot of ${when(DATA.generated_at)}. Read only.`;
+    setMeta(`Snapshot of ${when(DATA.generated_at)}. Read only.`);
   }
   render();
+  if (LIVE && !welcomed()) showSplash();
 }
 init();
 </script>
