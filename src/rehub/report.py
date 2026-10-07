@@ -53,23 +53,22 @@ def snapshot(conn: sqlite3.Connection) -> dict[str, Any]:
         for run in observed:
             diffs[f"{name}|{run['id']}"] = _diff_payload(baseline.diff(conn, name, run["id"]))
 
-    doctor = []
-    for row in conn.execute(
-        "SELECT d.tool, d.version, d.image, d.fixture, d.status, d.diff_json, d.at"
-        " FROM doctor_runs d JOIN (SELECT tool, fixture, MAX(id) AS id FROM doctor_runs"
-        " GROUP BY tool, fixture) latest ON latest.id = d.id ORDER BY d.tool, d.fixture"
-    ):
-        doctor.append(
-            {
-                "tool": row[0],
-                "version": row[1],
-                "image": row[2],
-                "fixture": row[3],
-                "status": row[4],
-                "lines": summarize(json.loads(row[5])),
-                "at": row[6],
-            }
+    doctor = [
+        {
+            "tool": row[0],
+            "version": row[1],
+            "image": row[2],
+            "fixture": row[3],
+            "status": row[4],
+            "lines": summarize(json.loads(row[5])),
+            "at": row[6],
+        }
+        for row in conn.execute(
+            "SELECT d.tool, d.version, d.image, d.fixture, d.status, d.diff_json, d.at"
+            " FROM doctor_runs d JOIN (SELECT tool, fixture, MAX(id) AS id FROM doctor_runs"
+            " GROUP BY tool, fixture) latest ON latest.id = d.id ORDER BY d.tool, d.fixture"
         )
+    ]
 
     rules = [
         dict(zip(("id", "name", "text", "status", "created_at"), r, strict=True))

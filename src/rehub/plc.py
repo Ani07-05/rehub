@@ -151,24 +151,16 @@ def code_lines(text: str) -> list[tuple[int, str]]:
 
 
 def analyze(text: str) -> list[Finding]:
-    found = []
+    found: list[Finding] = []
     for number, code in code_lines(text):
         hits = [rule for rule in RULES if rule.pattern.search(code)]
         if any(rule.id == "network-call" for rule in hits):
             # the call finding already shows the address on this line
             hits = [rule for rule in hits if rule.id != "fixed-address"]
-        for rule in hits:
-            found.append(
-                Finding(
-                    rule.id,
-                    rule.severity,
-                    rule.title,
-                    number,
-                    code.strip(),
-                    rule.why,
-                    rule.check,
-                )
-            )
+        found.extend(
+            Finding(rule.id, rule.severity, rule.title, number, code.strip(), rule.why, rule.check)
+            for rule in hits
+        )
     return sorted(found, key=lambda f: (ORDER[f.severity], f.line, f.rule))
 
 

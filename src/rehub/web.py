@@ -343,7 +343,7 @@ class Api:
             }
         sent: list[str] = []
 
-        def on_send(system: str, user: str) -> None:
+        def on_send(_system: str, user: str) -> None:
             sent.append(user)
 
         with tempfile.TemporaryDirectory(prefix="rehub-draft-") as tmp:
@@ -468,6 +468,19 @@ def _store_upload(handler: BaseHTTPRequestHandler) -> tuple[str, Path]:
     return filename, final
 
 
+JSON_ROUTES = {
+    "/api/doctor": "doctor",
+    "/api/baselines": "save_baseline",
+    "/api/yara/scan": "yara_scan",
+    "/api/yara/draft": "yara_draft",
+    "/api/devices": "set_device",
+    "/api/plc/check": "plc_check",
+    "/api/plc/approve": "plc_approve",
+    "/api/guide": "ask_guide",
+    "/api/analyze-sample": "analyze_sample",
+}
+
+
 class Handler(BaseHTTPRequestHandler):
     api = Api()
     token: str | None = None
@@ -583,26 +596,11 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path == "/api/analyze":
             self._dispatch(lambda: self.api.analyze(*_store_upload(self)))
-        elif path == "/api/doctor":
-            self._dispatch(lambda: self.api.doctor(self._read_json()))
-        elif path == "/api/baselines":
-            self._dispatch(lambda: self.api.save_baseline(self._read_json()))
-        elif path == "/api/yara/scan":
-            self._dispatch(lambda: self.api.yara_scan(self._read_json()))
-        elif path == "/api/yara/draft":
-            self._dispatch(lambda: self.api.yara_draft(self._read_json()))
-        elif path == "/api/devices":
-            self._dispatch(lambda: self.api.set_device(self._read_json()))
         elif path == "/api/demo":
             self._dispatch(self.api.demo)
-        elif path == "/api/plc/check":
-            self._dispatch(lambda: self.api.plc_check(self._read_json()))
-        elif path == "/api/plc/approve":
-            self._dispatch(lambda: self.api.plc_approve(self._read_json()))
-        elif path == "/api/guide":
-            self._dispatch(lambda: self.api.ask_guide(self._read_json()))
-        elif path == "/api/analyze-sample":
-            self._dispatch(lambda: self.api.analyze_sample(self._read_json()))
+        elif path in JSON_ROUTES:
+            handler = getattr(self.api, JSON_ROUTES[path])
+            self._dispatch(lambda: handler(self._read_json()))
         else:
             self._json(404, {"error": "not found"})
 

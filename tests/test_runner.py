@@ -9,7 +9,7 @@ from rehub import runner
 
 
 def _fake(stderr: str, code: int = 125) -> Callable[..., subprocess.CompletedProcess[str]]:
-    def run(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+    def run(cmd: list[str], **_kwargs: Any) -> subprocess.CompletedProcess[str]:
         return subprocess.CompletedProcess(cmd, code, stdout="", stderr=stderr)
 
     return run

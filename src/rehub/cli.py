@@ -236,7 +236,7 @@ def _confirm_hosted(provider: yara_ai.Provider, system: str, user: str, yes: boo
 
 
 def _announce(provider: yara_ai.Provider) -> Callable[[str, str], None]:
-    def send(system: str, user: str) -> None:
+    def send(_system: str, user: str) -> None:
         if provider.hosted:
             typer.echo(f"sending to {provider.name}:\n{user}\n", err=True)
 
