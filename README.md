@@ -113,8 +113,8 @@ the folder to remove everything. API keys you paste into the page are never save
 ## More
 
 [docs/install.md](docs/install.md), [docs/usage.md](docs/usage.md) and
-[docs/description.md](docs/description.md). A five minute demo is in `demo/demo.sh`. The command
-line is there for scripting.
+[docs/description.md](docs/description.md). The command line is there for
+scripting.
 
 ## License
 

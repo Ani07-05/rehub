@@ -83,7 +83,3 @@ none of its code is bundled here.
 
 Apache-2.0. Yara-Rules is GPL-2.0, so `rehub yara fetch` clones a pinned commit into your own
 directory and nothing from it is bundled.
-
-## Changelog
-
-See [../CHANGELOG.md](../CHANGELOG.md).
