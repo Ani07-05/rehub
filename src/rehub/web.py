@@ -39,7 +39,12 @@ Json = dict[str, Any]
 
 _IP = re.compile(r"^[0-9a-fA-F:.]{2,45}$")
 DEMO_BASELINE = "plant-normal"
-DEMO_LABELS = {"10.0.0.20": "Boiler PLC", "10.0.0.10": "Engineering laptop"}
+DEMO_LABELS = {"10.0.0.20": "Boiler PLC (sample)", "10.0.0.10": "Engineering laptop (sample)"}
+
+
+def _api_key(body: Json) -> str | None:
+    key = body.get("api_key")
+    return key.strip() if isinstance(key, str) and key.strip() else None
 
 
 class ApiError(Exception):
