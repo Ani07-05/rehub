@@ -112,9 +112,8 @@ the folder to remove everything. API keys you paste into the page are never save
 
 ## More
 
-[docs/install.md](docs/install.md), [docs/usage.md](docs/usage.md) and
-[docs/description.md](docs/description.md). The command line is there for
-scripting.
+[docs/install.md](docs/install.md) and [docs/usage.md](docs/usage.md). The command line is
+there for scripting.
 
 ## License
 
