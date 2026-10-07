@@ -118,4 +118,4 @@ scripting.
 
 ## License
 
-Apache-2.0, see [LICENSE](LICENSE). Third party tools in the image keep their own licenses.
+MIT, see [LICENSE](LICENSE). Third party tools in the image keep their own licenses.
