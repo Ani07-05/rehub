@@ -96,17 +96,19 @@ One SQLite file at `~/.rehub/rehub.db` (or `$REHUB_HOME`), with recordings you l
 `~/.rehub/uploads`, tool output in `~/.rehub/runs`, and settings in `~/.rehub/config.toml`. Delete
 the folder to remove everything. API keys you paste into the page are never saved.
 
-## Good to know
+## What version 0.1 covers
 
-- Version 0.1 reads S7comm, EtherNet/IP and Modbus/TCP.
-- Suricata has no S7comm parser, so S7 traffic is matched with raw content rules and Zeek is the
-  source for S7.
-- The upgrade check uses small synthetic recordings. It shows what the tools do differently, and
-  it cannot predict what breaks on your traffic.
-- Model-written rules are tested against the files you provide. Review them before you rely on them.
-- The PLC check is a review and not a vulnerability scan. It does not test firmware.
-- It is built for one analyst on one computer. macOS arm64 is the tested platform, Linux should
-  work, and Windows is untested.
+- **Protocols:** S7comm, EtherNet/IP and Modbus/TCP.
+- **S7 traffic:** Zeek reads it. Suricata has no S7comm parser, so it matches S7 with raw content
+  rules.
+- **Upgrade check:** it replays small synthetic recordings through every tool and shows what each
+  one does differently.
+- **Rules from a model:** each one is compiled and tested against the files you give it. Review a
+  rule before you rely on it.
+- **PLC check:** a review of risky patterns and changes, not a vulnerability scan. It does not test
+  firmware.
+- **Who it is for:** one analyst on one computer.
+- **Platforms:** macOS arm64 is tested. Linux should work. Windows is untested.
 
 ## More
 
